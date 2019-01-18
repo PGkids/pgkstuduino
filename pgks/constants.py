@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) 2019 PGkids Laboratory
 
-from studuino import A0,A1,A2,A3,A4,A5,A6,A7,M1,M2,D2,D4,D7,D8,D9,D10,D11,D12
+from studuino import * #Part,Connector,A0,A1,A2,A3,A4,A5,A6,A7,M1,M2,D2,D4,D7,D8,D9,D10,D11,D12
+from .wrapped_classes import *
 
 conn_dic = {'A0':A0, 'A1':A1, 'A2':A2, 'A3':A3,
             'A4':A4, 'A5':A5, 'A6':A0, 'A7':A0,
@@ -11,6 +12,28 @@ conn_dic = {'A0':A0, 'A1':A1, 'A2':A2, 'A3':A3,
             }
             
 
+def ensure_connector(obj):
+    if isinstance(obj, Connector):
+        return obj
+    elif obj in conn_dic:
+        return conn_dic[obj]
+
+part_dic = {'DCMotor':DCMotor_wrap, 'DC':DCMotor_wrap, 'DCモーター':DCMotor_wrap, 'モーター':DCMotor_wrap,
+            '車輪':DCMotor_wrap,
+            'Servomotor':Servomotor_wrap, 'Servo':Servomotor_wrap, 'サーボモーター':Servomotor_wrap,
+            'サーボ':Servomotor_wrap,
+            'LED':LED_wrap,
+            'Buzzer':Buzzer_wrap, 'ブザー':Buzzer_wrap
+}
+
+def ensure_part(x):
+    if isinstance(x, str):
+        return part_dic[x]
+    elif issubclass(x, Part):
+        return x
+    
+        
+    
 # コネクタ
 def conn(ident):
     ident = ident.upper()
@@ -27,7 +50,7 @@ def conn(ident):
 
 
 note_dic = {'C':0,
-            'C+':1, 'D-':1
+            'C+':1, 'D-':1,
             'D':2,
             'D+':3,'E-':3,
             'E':4, 'F-':4,
@@ -40,7 +63,7 @@ note_dic = {'C':0,
             'B':11,'C-':11}
 
 # note('C')==60, note('C',3)=48
-
+# MIDI互換
 def note(ident, octave=4):
     return 12 + 12*note_dic[ident]
 
