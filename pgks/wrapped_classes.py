@@ -7,22 +7,28 @@ from threading import Thread
 from time import sleep
 
 class RobotJob():
-    def __init__(self, proc):
+    def __init__(self, proc, initializer=None, finalizer=None):
         self.polling = True
-        self.thread = Thread(target=proc,args=[self])
-        self.thread.start()
+        def f(arg):
+            if initializer: initializer()
+            proc(arg)
+            if finalizer: finalizer()
+        self._thread = Thread(target=proc,args=[self])
+        self._thread.start()
         
     def wait(self):
-        self.thread.join()
+        self._thread.join()
     
     def cancel(self):
         self.polling = False
         self.wait()
-    
+
+    def thread(self):
+        return self._thread
 
 class LED_wrap(LED):
     # n==None means n is infinity
-    def blink(self, n=None, on=0.3, off=0.3):
+    def blink(self, n=None, on=0.3, off=0.3, initializer=None, finalizer=None):
         def f(job):
             nonlocal n
             while job.polling:
@@ -34,7 +40,7 @@ class LED_wrap(LED):
                 print('off')
                 sleep(off)
                 
-        return RobotJob(f)
+        return RobotJob(f,initializer,finalizer)
                                
                         
 class Buzzer_wrap(Buzzer):
