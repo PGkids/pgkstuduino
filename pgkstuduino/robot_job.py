@@ -14,24 +14,30 @@ class RobotJob():
             proc(self)
             self.__active = False
             self.__event.set()
-        self.__thrproc = fn
-
+        self.__thrproc  = fn
+        self.__raw = proc
+        
     def __call__(self):
         self.start()
         self.join()
+
+    def clone(self):
+        return RobotJob(self.__raw)
         
     def _get_event(self):
         return self.__event
 
     # Safe Sleep
-    def _safe_sleep(self, sec):
-        if not self._active: return False
+    def _safe_sleep(self, sec, verifier=None):
+        if not self.__active: return False
         clock_entered = clock()
         while True:
             if not self.__event.wait(sec):
                 # Timed out
                 return self.__active
             if not self.__active:
+                return False
+            if verifier and not verifier():
                 return False
             self.__event.clear()
             cur_clock = clock()
@@ -121,13 +127,29 @@ def ordjob(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
-def loopjob(job) -> RobotJob:
+def loopjob(job, n=None) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
+        cnt = n
         while master_job.is_active():
+            if cnt is not None:
+                if cnt > 0: cnt -= 1
+                else:       break
             job._start_with(ev)
             if not master_job._wait_for_event():
                 job.cancel()
             job.join()
             
     return RobotJob(fn)
+
+def timedjob(job, sec) -> RobotJob:
+    def fn(master_job):
+        ev = master_job._get_event()
+        job._start_with(ev)
+        master_job._safe_sleep(sec, lambda:job.is_active())
+        job.cancel()
+        job.join()
+            
+    return RobotJob(fn)
+
+
