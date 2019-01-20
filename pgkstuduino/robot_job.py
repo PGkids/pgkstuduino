@@ -90,7 +90,7 @@ class RobotJob():
 def mkjob(proc, *args) -> RobotJob:
     return RobotJob(lambda job:proc(*args))
 
-def parjob(*jobs) -> RobotJob:
+def par(*jobs) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
         for job in jobs:
@@ -113,7 +113,7 @@ def parjob(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
-def ordjob(*jobs) -> RobotJob:
+def seq(*jobs) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
         for job in jobs:
@@ -127,7 +127,7 @@ def ordjob(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
-def loopjob(job, n=None) -> RobotJob:
+def rep(job, n=None) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
         cnt = n
@@ -142,11 +142,13 @@ def loopjob(job, n=None) -> RobotJob:
             
     return RobotJob(fn)
 
-def timedjob(job, sec) -> RobotJob:
+# strict==Trueなら、指定されたsec秒まで(キャンセルされない限り)終了しない
+def lim(job, sec, strict=False) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
         job._start_with(ev)
-        master_job._safe_sleep(sec, lambda:job.is_active())
+        verifier = None if strict else lambda:job.is_active()
+        master_job._safe_sleep(sec, verifier)
         job.cancel()
         job.join()
             
