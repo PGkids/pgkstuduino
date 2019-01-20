@@ -15,10 +15,11 @@ class RobotJob():
     __active    = False
     
     def __init__(self, proc):
-        def f():
+        def fn():
             proc(self)
+            self.__active = False
             self.__event.set()
-        self.__thrproc = f
+        self.__thrproc = fn
 
     def __call__(self):
         self.start()
@@ -51,10 +52,10 @@ class RobotJob():
     def is_active(self):
         return self.__active
     
-    def start(self, join=False, event=None):
+    def __start(self, join, event):
         if not self.__active:
             self.__active = True
-            self.__event = Event() if not event else event
+            self.__event = event
             self.__thread = Thread(target=self.__thrproc)
             self.__thread.start()
             if join: self.join()
@@ -62,6 +63,12 @@ class RobotJob():
         else:
             raise(RuntimeError)
 
+    def start(self, join=False):
+        return self.__start(join, Event())
+
+    def _start_with(self, event):
+        return self.__start(False, event)
+    
     def join(self, timeout=None):
         if self.__active:
             self.__thread.join(timeout)
@@ -70,26 +77,23 @@ class RobotJob():
             else:
                 self.__thread = None
                 self.__active = False
+                self.__event.clear()
                 return True
         else:
-            raise(RuntimeError)
-    
+            return True
     def cancel(self):
         if self.__active:
             self.__active = False
             self.__event.set()
-            self.join()
-        else:
-            raise(RuntimeError)
 
-def mkjob(proc) -> RobotJob:
-    return RobotJob(lambda job:proc())
+def mkjob(proc, *args) -> RobotJob:
+    return RobotJob(lambda job:proc(*args))
 
 def parjob(*jobs) -> RobotJob:
-    def f(master_job):
-        ev = master_job.get_event()
+    def fn(master_job):
+        ev = master_job._get_event()
         for job in jobs:
-            job.start(ev)
+            job._start_with(ev)
         while master_job.is_active():
             still_alive = False
             for job in jobs:
@@ -106,25 +110,34 @@ def parjob(*jobs) -> RobotJob:
         for job in jobs:
             job.join()
 
-    return RobotJob(f)
+    return RobotJob(fn)
 
 def ordjob(*jobs) -> RobotJob:
-    def f(master_job):
-        ev = master_job.get_event()
+    def fn(master_job):
+        ev = master_job._get_event()
         for job in jobs:
-            job.start(ev)
+            job._start_with(ev)
             # master_jobがキャンセルされた場合
-            if not job._wait_for_event():
+            if not master_job._wait_for_event():
                 job.cancel()
             job.join()
             if not master_job.is_active():
                 break
 
-    return RobotJob(f)
+    return RobotJob(fn)
 
+def loopjob(job) -> RobotJob:
+    def fn(master_job):
+        ev = master_job._get_event()
+        while master_job.is_active():
+            job._start_with(ev)
+            if not master_job._wait_for_event():
+                job.cancel()
+            job.join()
             
 
-       
+    return RobotJob(fn)
+
 
 # 出力系パーツ
 
@@ -132,7 +145,7 @@ class LED_wrap(LED):
     # n==None means n is infinity
         
     def job_blink(self, n=None, on=0.3, off=0.3):
-        def f(job):
+        def fn(job):
             cnt = n
             while job.is_active():
                 if cnt is not None:
@@ -145,7 +158,7 @@ class LED_wrap(LED):
                 print('off')
                 job._safe_sleep(off)
                 
-        return RobotJob(f)
+        return RobotJob(fn)
                                
 
 class Buzzer_wrap(Buzzer):
@@ -166,14 +179,14 @@ class Buzzer_wrap(Buzzer):
         
 class DCMotor_wrap(DCMotor):
     def job_drive(self,sec,forward=True,brake=True):
-        def f(job):
+        def fn(job):
             if job.is_active():
                 print('moveon!',forward)
                 #self.moveon(forward)
                 job._safe_sleep(sec)
                 print('brake!!!',brake)
                 #self.stop(brake=brake)
-        return RobotJob(f)
+        return RobotJob(fn)
 
     def moveon(self,forward=True):
         self.move(FWD if forward else BCK)
