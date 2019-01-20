@@ -5,6 +5,7 @@ from studuino import (LED,Buzzer,DCMotor,Servomotor,Accelerometer,PushSwitch,Tou
                       IRPhotoreflector,LightSensor,SoundSensor,
                       FWD,BCK,BRAKE,COAST)
 
+from .robot_job import *
 
 # 出力系パーツ
 

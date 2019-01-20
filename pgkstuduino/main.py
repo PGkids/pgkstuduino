@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+# Copyright (c) 2019 PGkids Laboratory
+
 import studuino
 from .utils import ensure_part,ensure_connector
 
