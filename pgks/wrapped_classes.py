@@ -20,54 +20,71 @@ class RobotJob():
 
     def __call__(self):
         self.start()
-        self.wait()
+        self.join()
         
-    # def _ssleep(self, sec):
-    #     if not self._active:
-    #         return False
-    #     elif sec>0.1:
-    #         m = ceil(sec/0.1)
-    #         shredded_sec = sec/m
-    #         while self._active and m>0:
-    #             m -= 1
-    #             sleep(shredded_sec)
-    #     else:
-    #         sleep(sec)
-    #     return self._active
 
     def _ssleep(self, sec):
         if not self.__event:
             return False
-        return self.__event.wait(sec)
+        return not self.__event.wait(sec)
 
     def is_active(self):
         return (self.__event and not self.__event.is_set())
     
-    def start(self):
+    def start(self, join=False):
         self.__event = Event()
         self.__thread = Thread(target=self.__thrproc)
         self.__thread.start()
+        if join: self.join()
         return self
 
-    def wait(self):
-        self.__thread.join()
-        self.__thread = None
+    def join(self, timeout=None):
+        self.__thread.join(timeout)
+        if self.__thread.is_alive():
+            return False
+        else:
+            self.__thread = None
+            return True
     
     def cancel(self):
         self.__event.set()
-        self.wait()
+        self.join()
 
 def mkjob(proc) -> RobotJob:
     return RobotJob(lambda job:proc())
 
-def parjobs(*jobs) -> RobotJob:
-    pass
+def parjob(*jobs) -> RobotJob:
+    def f(master_job):
+        for job in jobs:
+            job.start()
+        while master_job.is_active():
+            still_alive = False
+            for job in jobs:
+                if job.is_active():
+                    still_alive = True
+            if still_alive:
+                if not master_job._ssleep(0.1):
+                    for job in jobs:
+                        if not job.is_active():
+                            job.cancel()
+            else:
+                break
+        # join all threads
+        for job in jobs:
+            job.join()
+
+    return RobotJob(f)
+                    
+            
+
+       
 
 # 出力系パーツ
 
 class LED_wrap(LED):
     # n==None means n is infinity
-    def blink(self, n=None, on=0.3, off=0.3):
+        
+    def job_blink(self, n=None, on=0.3, off=0.3):
         def f(job):
             cnt = n
             while job.is_active():
@@ -96,10 +113,20 @@ class Buzzer_wrap(Buzzer):
     def noteoff(self):
         self.off()
 
-class DCMotor_wrap(DCMotor):
-    _direction = FWD
-    def drive(self,sec,forward=True,brake=True):
+    def job_perform():
         pass
+        
+        
+class DCMotor_wrap(DCMotor):
+    def job_drive(self,sec,forward=True,brake=True):
+        def f(job):
+            if job.is_active():
+                print('moveon!',forward)
+                #self.moveon(forward)
+                job._ssleep(sec)
+                print('brake!!!',brake)
+                #self.stop(brake=brake)
+        return RobotJob(f)
 
     def moveon(self,forward=True):
         self.move(FWD if forward else BCK)
@@ -108,31 +135,64 @@ class DCMotor_wrap(DCMotor):
     def stop(motion=BRAKE, brake=True):
         if motion==BRAKE and not brake: motion = COAST
         DCMotor.stop(self, motion)
-    
+
+class Servomotor_wrap(Servomotor):
+    def job_move(self, angle):
+        def f(job):
+            self.setAngle(angle)
+        return RobotJob(f)
+
+    @staticmethod
+    def job_sync_move(servos:[Servomotor], angles:[int], delay=1):
+        def f(job):
+            Servomotor.syncMove(servos, angles, delay)
+        return RobotJob(f)
+
     
 ## 入力系パーツ デジタルセンサ
 
-class PushSwitch_wrap(PushSwitch):
-    pass
+class SensorMonitor():
+    def job_monitor(self, callback, interval=1, n=None):
+        def f(job):
+            cnt = n
+            while job.is_active():
+                if cnt is not None:
+                    if cnt==0: break
+                    cnt -= 1
+                callback(self.getValue())
+                job._ssleep(interval)
+        return RobotJob(f)
 
-class TouchSensor_wrap(TouchSensor):
+class PushSwitch_wrap(PushSwitch,SensorMonitor):
+    def job_op_pushed(self, callback, once=True):
+        def f(job):
+            ignore = False
+            while job.is_active():
+                if not ignore and self.getValue()==1:
+                    callback(*args)
+                    if once: break;
+                    ignore = True
+                else:
+                    ignore = False
+                job._ssleep(0.1)
+    
+
+class TouchSensor_wrap(TouchSensor,SensorMonitor):
     pass
 
 ## 入力系パーツ アナログセンサ
 
-class Servomotor_wrap(Servomotor):
+
+class Accelerometer_wrap(Accelerometer,SensorMonitor):
     pass
 
-class Accelerometer_wrap(Accelerometer):
+
+class IRPhotoreflector_wrap(IRPhotoreflector,SensorMonitor):
     pass
 
-
-class IRPhotoreflector_wrap(IRPhotoreflector):
+class LightSensor_wrap(LightSensor,SensorMonitor):
     pass
 
-class LightSensor_wrap(LightSensor):
-    pass
-
-class SoundSensor_wrap(SoundSensor):
+class SoundSensor_wrap(SoundSensor,SensorMonitor):
     pass
 
