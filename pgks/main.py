@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import studuino
-from .constants import ensure_part,ensure_connector
+from .utils import ensure_part,ensure_connector
 
 def build(p):
     ctor = p[0]
@@ -31,6 +31,7 @@ def mkpart(format):
 #mkpart('DCMotor/A0/A1/A2,DC/M1/M2')
 #
 #a,b,c = mkpart('DCMotor:A0/A1/A2,DC:M1/M2')
+
 
             
     
