@@ -5,76 +5,123 @@ from studuino import (LED,Buzzer,DCMotor,Servomotor,Accelerometer,PushSwitch,Tou
                       IRPhotoreflector,LightSensor,SoundSensor,
                       FWD,BCK,BRAKE,COAST)
 from threading import Thread,Event
-from time import sleep
+from time import sleep,clock
 from math import ceil
 
 
 class RobotJob():
-    __thread = None
-    __event = None
+    __thread    = None
+    __event     = None
+    __active    = False
     
     def __init__(self, proc):
-        #def f():
-        #    proc(self)
-        self.__thrproc = lambda:proc(self)
+        def f():
+            proc(self)
+            self.__event.set()
+        self.__thrproc = f
 
     def __call__(self):
         self.start()
         self.join()
         
+    def _get_event(self):
+        return self.__event
 
-    def _ssleep(self, sec):
-        if not self.__event:
-            return False
-        return not self.__event.wait(sec)
+    # Safe Sleep
+    def _safe_sleep(self, sec):
+        if not self._active: return False
+        clock_entered = clock()
+        while True:
+            if not self.__event.wait(sec):
+                # Timed out
+                return self.__active
+            if not self.__active:
+                return False
+            self.__event.clear()
+            cur_clock = clock()
+            if (cur_clock - clock_entered) >= sec:
+                return True
+            sec -= cur_clock - clock_entered
+            clock_entered = cur_clock
 
-    def is_active(self):
-        return (self.__event and not self.__event.is_set())
+    def _wait_for_event(self):
+        self.__event.wait(None)
+        return self.__active
     
-    def start(self, join=False):
-        self.__event = Event()
-        self.__thread = Thread(target=self.__thrproc)
-        self.__thread.start()
-        if join: self.join()
-        return self
+    def is_active(self):
+        return self.__active
+    
+    def start(self, join=False, event=None):
+        if not self.__active:
+            self.__active = True
+            self.__event = Event() if not event else event
+            self.__thread = Thread(target=self.__thrproc)
+            self.__thread.start()
+            if join: self.join()
+            return self
+        else:
+            raise(RuntimeError)
 
     def join(self, timeout=None):
-        self.__thread.join(timeout)
-        if self.__thread.is_alive():
-            return False
+        if self.__active:
+            self.__thread.join(timeout)
+            if self.__thread.is_alive():
+                return False
+            else:
+                self.__thread = None
+                self.__active = False
+                return True
         else:
-            self.__thread = None
-            return True
+            raise(RuntimeError)
     
     def cancel(self):
-        self.__event.set()
-        self.join()
+        if self.__active:
+            self.__active = False
+            self.__event.set()
+            self.join()
+        else:
+            raise(RuntimeError)
 
 def mkjob(proc) -> RobotJob:
     return RobotJob(lambda job:proc())
 
 def parjob(*jobs) -> RobotJob:
     def f(master_job):
+        ev = master_job.get_event()
         for job in jobs:
-            job.start()
+            job.start(ev)
         while master_job.is_active():
             still_alive = False
             for job in jobs:
                 if job.is_active():
                     still_alive = True
             if still_alive:
-                if not master_job._ssleep(0.1):
+                if not master_job._wait_for_event():
                     for job in jobs:
                         if not job.is_active():
                             job.cancel()
             else:
                 break
-        # join all threads
+        # join all jobs
         for job in jobs:
             job.join()
 
     return RobotJob(f)
-                    
+
+def ordjob(*jobs) -> RobotJob:
+    def f(master_job):
+        ev = master_job.get_event()
+        for job in jobs:
+            job.start(ev)
+            # master_jobがキャンセルされた場合
+            if not job._wait_for_event():
+                job.cancel()
+            job.join()
+            if not master_job.is_active():
+                break
+
+    return RobotJob(f)
+
             
 
        
@@ -92,11 +139,11 @@ class LED_wrap(LED):
                     if cnt==0: break
                     cnt -= 1
                 print('on')
-                if not job._ssleep(on):
+                if not job._safe_sleep(on):
                     # todo: off にしてから
                     break
                 print('off')
-                job._ssleep(off)
+                job._safe_sleep(off)
                 
         return RobotJob(f)
                                
@@ -123,7 +170,7 @@ class DCMotor_wrap(DCMotor):
             if job.is_active():
                 print('moveon!',forward)
                 #self.moveon(forward)
-                job._ssleep(sec)
+                job._safe_sleep(sec)
                 print('brake!!!',brake)
                 #self.stop(brake=brake)
         return RobotJob(f)
@@ -160,7 +207,7 @@ class SensorMonitor():
                     if cnt==0: break
                     cnt -= 1
                 callback(self.getValue())
-                job._ssleep(interval)
+                job._safe_sleep(interval)
         return RobotJob(f)
 
 class PushSwitch_wrap(PushSwitch,SensorMonitor):
@@ -174,7 +221,7 @@ class PushSwitch_wrap(PushSwitch,SensorMonitor):
                     ignore = True
                 else:
                     ignore = False
-                job._ssleep(0.1)
+                job._safe_sleep(0.1)
     
 
 class TouchSensor_wrap(TouchSensor,SensorMonitor):
