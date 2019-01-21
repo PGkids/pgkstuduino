@@ -4,6 +4,12 @@
 import studuino
 from .utils import ensure_part,ensure_connector
 
+def connect(comPortNo):
+    studuino.start(f'COM{comPortNo}')
+
+def disconnect():
+    studuino.stop()
+
 def build(p):
     ctor = p[0]
     conn = p[1]

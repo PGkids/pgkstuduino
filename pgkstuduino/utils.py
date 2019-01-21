@@ -22,8 +22,15 @@ part_dic = {'DCMotor':DCMotor_wrap, 'DC':DCMotor_wrap, 'DCモーター':DCMotor_
             '車輪':DCMotor_wrap,
             'Servomotor':Servomotor_wrap, 'Servo':Servomotor_wrap, 'サーボモーター':Servomotor_wrap,
             'サーボ':Servomotor_wrap,
-            'LED':LED_wrap,
-            'Buzzer':Buzzer_wrap, 'ブザー':Buzzer_wrap
+            'LED':LED_wrap, '発光ダイオード':LED_wrap,
+            'Buzzer':Buzzer_wrap, 'ブザー':Buzzer_wrap,
+            'PushSwitch':PushSwitch_wrap, 'スイッチ':PushSwitch_wrap, 'ボタン':PushSwitch_wrap,
+            'TouchSensor':TouchSensor_wrap, 'タッチセンサー':TouchSensor_wrap,
+            'Accelerometer':Accelerometer_wrap, '加速度センサー':Accelerometer_wrap,
+            'IRPhotoreflector':IRPhotoreflector_wrap, 'フォトリフレクター':IRPhotoreflector_wrap,
+            'LightSensor':LightSensor_wrap, '光センサー':LightSensor_wrap,
+            'SoundSensor':SoundSensor_wrap, '音センサー':SoundSensor_wrap
+        
 }
 
 def ensure_part(x):

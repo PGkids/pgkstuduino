@@ -21,7 +21,8 @@ class RobotJob():
         self.start()
         self.join()
 
-    def clone(self):
+    # Copy job
+    def cp(self):
         return RobotJob(self.__raw)
         
     def _get_event(self):
