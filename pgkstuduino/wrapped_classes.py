@@ -20,10 +20,12 @@ class LED_wrap(LED):
                     if cnt==0: break
                     cnt -= 1
                 print('on')
+                self.on()
                 if not job._safe_sleep(on):
                     # todo: off にしてから
                     break
                 print('off')
+                self.off()
                 job._safe_sleep(off)
                 
         return RobotJob(fn)
@@ -50,10 +52,10 @@ class DCMotor_wrap(DCMotor):
         def fn(job):
             if job.is_active():
                 print('moveon!',forward)
-                #self.moveon(forward)
+                self.moveon(forward)
                 job._safe_sleep(sec)
                 print('brake!!!',brake)
-                #self.stop(brake=brake)
+                self.stop(brake=brake)
         return RobotJob(fn)
 
     def moveon(self,forward=True):
