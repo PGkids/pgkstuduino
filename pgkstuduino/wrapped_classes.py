@@ -32,9 +32,11 @@ class LED_wrap(LED):
                                
 
 class Buzzer_wrap(Buzzer):
-    def on(self, note, octave=0, sec=None, duration=None):
+    def on(self, note, octave=0, sec=None, duration=0):
+        d = 0
         if sec: d = int(sec*1000)
         elif duration: d = duration
+        
         Buzzer.on(self, note, octave=octave, duration=d)
 
     ## MIDI style
@@ -95,17 +97,17 @@ class SensorMonitor():
 
 class PushSwitch_wrap(PushSwitch,SensorMonitor):
     def job_op_pushed(self, callback, once=True):
-        def f(job):
+        def fn(job):
             ignore = False
             while job.is_active():
-                if not ignore and self.getValue()==1:
-                    callback(*args)
+                if not ignore and self.getValue()==0:
+                    callback()
                     if once: break;
                     ignore = True
                 else:
                     ignore = False
                 job._safe_sleep(0.1)
-    
+        return RobotJob(fn)
 
 class TouchSensor_wrap(TouchSensor,SensorMonitor):
     pass
