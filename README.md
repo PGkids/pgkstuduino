@@ -1,4 +1,4 @@
 <!-- -*- coding: utf-8 -*- -->
 # pgkstuduino
-pystuduinoの高水準ラッパ
-若干Lisp風味
+pystuduinoの高水準ラッパ  
+クロージャを紡ぐスタイルで、すこしLisp的  
