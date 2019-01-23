@@ -33,7 +33,7 @@ class PartWrap():
         if _debug: _debug(f'{self.name}::attach')
         if _realp: self.attach(connector)
 
-class BuzzerWrap(st.Buzzer,PartWrap):
+class BuzzerWrap(PartWrap,st.Buzzer):
     def off(self):
         if _debug: _debug('Buzzer::off')
         if _realp: st.Buzzer.off(self)
@@ -42,7 +42,7 @@ class BuzzerWrap(st.Buzzer,PartWrap):
         if _realp: st.Buzzer.on(self, sound, octave=octave, duration=duration)
     
 
-class DCMotorWrap(st.DCMotor,PartWrap):
+class DCMotorWrap(PartWrap,st.DCMotor):
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
         if _realp: st.DCMotor.move(self, motion)
@@ -53,7 +53,7 @@ class DCMotorWrap(st.DCMotor,PartWrap):
         if _debug: _debug('DCMotor::setPower',power=power)
         if _realp: st.DCMotor.power(self, power)
 
-class LEDWrap(st.LED,PartWrap):
+class LEDWrap(PartWrap,st.LED):
     def on(self):
         if _debug: _debug('LED::on')
         if _realp: st.LED.on(self)
@@ -61,7 +61,7 @@ class LEDWrap(st.LED,PartWrap):
         if _debug: _debug('LED::off')
         if _realp: st.LED.off(self)
 
-class ServomotorWrap(st.Servomotor,PartWrap):
+class ServomotorWrap(PartWrap,st.Servomotor):
     def setAngle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         if _realp: st.Servomotor.setAngle(self,angle)
@@ -77,22 +77,22 @@ class SensorWrap():
         if _realp: return self.getValue()
         else:      return 1 
 
-class PushSwitchWrap(st.PushSwitch,PartWrap,SensorWrap):
+class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
     pass
 
-class TouchSensorWrap(st.TouchSensor,PartWrap,SensorWrap):
+class TouchSensorWrap(PartWrap,SensorWrap,st.TouchSensor):
     pass
 
-class IRPhotoreflectorWrap(st.IRPhotoreflector,PartWrap,SensorWrap):
+class IRPhotoreflectorWrap(PartWrap,SensorWrap,st.IRPhotoreflector):
     pass
 
-class LightSensorWrap(st.LightSensor,PartWrap,SensorWrap):
+class LightSensorWrap(PartWrap,SensorWrap,st.LightSensor):
     pass
 
-class SoundSensorWrap(st.SoundSensor,PartWrap,SensorWrap):
+class SoundSensorWrap(PartWrap,SensorWrap,st.SoundSensor):
     pass
 
-class AccelerometerWrap(st.Accelerometer,PartWrap):
+class AccelerometerWrap(PartWrap,st.Accelerometer):
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
         if _realp: return self.getValue()
