@@ -2,13 +2,14 @@
 # Copyright (c) 2019 PGkids Laboratory
 
 import studuino
+from .primitives import *
 from .utils import ensure_part,ensure_connector
 
 def connect(comPortNo):
-    studuino.start(f'COM{comPortNo}')
+    st_start(f'COM{comPortNo}')
 
 def disconnect():
-    studuino.stop()
+    st_stop()
 
 def build(p):
     ctor = p[0]

@@ -3,6 +3,9 @@ from pgkstuduino import *
 
 # 3つのLEDを異なる発光パターンで同時にブリンクさせる並列処理の例
 
+st_set_debug()
+st_set_real(False)
+
 connect(4)
 
 led1,led2,led3 = mkpart('LED:A0/A1/A2')

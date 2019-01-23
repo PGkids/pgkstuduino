@@ -18,18 +18,18 @@ def ensure_connector(obj):
     elif obj in conn_dic:
         return conn_dic[obj]
 
-part_dic = {'DCMotor':DCMotor_wrap, 'DC':DCMotor_wrap, 'DCモーター':DCMotor_wrap, 'モーター':DCMotor_wrap,
-            '車輪':DCMotor_wrap,
-            'Servomotor':Servomotor_wrap, 'Servo':Servomotor_wrap, 'サーボモーター':Servomotor_wrap,
-            'サーボ':Servomotor_wrap,
-            'LED':LED_wrap, '発光ダイオード':LED_wrap,
-            'Buzzer':Buzzer_wrap, 'ブザー':Buzzer_wrap,
-            'PushSwitch':PushSwitch_wrap, 'スイッチ':PushSwitch_wrap, 'ボタン':PushSwitch_wrap,
-            'TouchSensor':TouchSensor_wrap, 'タッチセンサー':TouchSensor_wrap,
-            'Accelerometer':Accelerometer_wrap, '加速度センサー':Accelerometer_wrap,
-            'IRPhotoreflector':IRPhotoreflector_wrap, 'フォトリフレクター':IRPhotoreflector_wrap,
-            'LightSensor':LightSensor_wrap, '光センサー':LightSensor_wrap,
-            'SoundSensor':SoundSensor_wrap, '音センサー':SoundSensor_wrap
+part_dic = {'DCMotor':PGkDCMotor, 'DC':PGkDCMotor, 'DCモーター':PGkDCMotor, 'モーター':PGkDCMotor,
+            '車輪':PGkDCMotor,
+            'Servomotor':PGkServomotor, 'Servo':PGkServomotor, 'サーボモーター':PGkServomotor,
+            'サーボ':PGkServomotor,
+            'LED':PGkLED, '発光ダイオード':PGkLED,
+            'Buzzer':PGkBuzzer, 'ブザー':PGkBuzzer,
+            'PushSwitch':PGkPushSwitch, 'スイッチ':PGkPushSwitch, 'ボタン':PGkPushSwitch,
+            'TouchSensor':PGkTouchSensor, 'タッチセンサー':PGkTouchSensor,
+            'Accelerometer':PGkAccelerometer, '加速度センサー':PGkAccelerometer,
+            'IRPhotoreflector':PGkIRPhotoreflector, 'フォトリフレクター':PGkIRPhotoreflector,
+            'LightSensor':PGkLightSensor, '光センサー':PGkLightSensor,
+            'SoundSensor':PGkSoundSensor, '音センサー':PGkSoundSensor
         
 }
 
