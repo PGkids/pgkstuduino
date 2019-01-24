@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 
-#import studuino
-#import time
 from pgkstuduino import *
 import midiate
+from sys import argv
 
-#st_set_debug()
-st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
+st_set_debug('-debug' in argv)
+st_set_real('-devel' not in argv)
 
 connect(4)
 

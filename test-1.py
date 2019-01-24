@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from pgkstuduino import *
+from sys import argv
+
+st_set_debug('-debug' in argv)
+st_set_real('-devel' not in argv)
 
 # 3つのLEDを異なる発光パターンで同時にブリンクさせる並列処理の例
 
-st_set_debug()
-st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
 
 connect(4)
 

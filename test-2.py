@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 from pgkstuduino import *
+from sys import argv
 
-st_set_debug()
-st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
+st_set_debug('-debug' in argv)
+st_set_real('-devel' not in argv)
 
 connect(4)
 p1,p2,p3,p4 = mkpart('PushSwitch:A0/A1/A2/A3')

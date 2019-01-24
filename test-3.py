@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 from pgkstuduino import *
+from sys import argv
+
+st_set_debug('-debug' in argv)
+st_set_real('-devel' not in argv)
 
 # 光センサの値をモニタリングする
 # A3スイッチで終了
-st_set_debug()
-st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
 
 connect(4)
 

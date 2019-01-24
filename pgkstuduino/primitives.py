@@ -58,13 +58,16 @@ _realp = True
 _simulator = None
 
 def st_set_debug(enable=True):
-    def debugPrint(name,**arg_pairs):
-        print(f'DEBUG: {name}(',end='')
-        for k in arg_pairs:
-            print(f'{k}={arg_pairs[k]},',end='')
-        print(')')
     global _debug
-    _debug = debugPrint
+    if enable:
+        def debugPrint(name,**arg_pairs):
+            print(f'DEBUG: {name}(',end='')
+            for k in arg_pairs:
+                print(f'{k}={arg_pairs[k]},',end='')
+            print(')')
+        _debug = debugPrint
+    else:
+        _debug = None
 
 def st_set_real(enable=True):
     global _realp
@@ -136,7 +139,7 @@ class PartWrap():
             
     def attach(self,connector):
         if _debug: _debug(f'{self.name}::attach',connector=connector)
-        if _realp: self.attach(connector)
+        if _realp: st.Part.attach(self,connector)
         else:
             t = self._frame_type
             device_name = self.name+'@'+str(get_connector_name(connector))
@@ -212,7 +215,7 @@ class ServomotorWrap(PartWrap,st.Servomotor):
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
-        if _realp: return self.getValue()
+        if _realp: return st.Sensor.getValue(self)
         else:      return self._widget.get() 
 
 class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
@@ -236,7 +239,7 @@ class AccelerometerWrap(PartWrap,st.Accelerometer):
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
-        if _realp: return self.getValue()
+        if _realp: return st.Accelerometer.getValue(self)
         else:      return (self._x_widget.get(),
                            self._y_widget.get(),
                            self._z_widget.get())
