@@ -8,6 +8,17 @@ import tkinter
 tk = tkinter
 from threading import Thread,Event
 
+_reversed_conn_dic = {st.A0:'A0', st.A1:'A1', st.A2:'A2', st.A3:'A3',
+                      st.A4:'A4', st.A5:'A5', st.A6:'A6', st.A7:'A7',
+                      st.M1:'M1', st.M2:'M2',
+                      st.D2:'D2', st.D4:'D4', st.D7:'D7', st.D8:'D8',
+                      st.D9:'D9', st.D10:'D10', st.D11:'D11', st.D12:'D12'}
+def get_connector_name(conn):
+    if conn in _reversed_conn_dic:
+        return _reversed_conn_dic[conn]
+    else:
+        raise(ValueError)
+
 class Simulator(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
@@ -15,12 +26,19 @@ class Simulator(tk.Frame):
         self.create_widgets()
 
     def abort(self):
-        self.master.destroy()
+        #self.master.destroy()
         os._exit(-1)
+    def quit_normally(self):
+        self.master.quit()
+        quit()
 
+    def toggle_quit_button_operation(self):
+        self.quit_btn.configure(text='QUIT normally',
+                                bg='white', fg='green', command=self.quit_normally)
     def create_widgets(self):
-        abort_btn = tk.Button(self, text='ABORT this process', bg='blue', fg='white', command=self.abort)
-        abort_btn.pack()
+        self.quit_btn = tk.Button(self, text='ABORT this process immediately',
+                              bg='blue', fg='white', command=self.abort)
+        self.quit_btn.pack()
         self.led_frame = tk.LabelFrame(self, text='LEDs')
         self.led_frame.pack()
         self.buzzer_frame = tk.LabelFrame(self, text='Buzzers')
@@ -51,16 +69,16 @@ def st_set_real(enable=True):
     global _realp
     _realp = enable
     ev = Event()
-    obj = None
     def gui():
         root = tk.Tk()
-        root.geometry('600x400')
+        #root.geometry('600x400')
         root.title('Studuino Simulator')
         sim = Simulator(root)
-        ev.set()
         global _simulator
         _simulator = sim
-        sim.mainloop()
+        #_simulator = sim
+        ev.set()
+        _simulator.mainloop()
     thr = Thread(target=gui)
     thr.start()
     ev.wait()
@@ -74,7 +92,8 @@ def st_start(com_port:str, baud_rate=38400):
 
 def st_stop():
     if _debug: _debug('st_stop')
-    if _realp: st.stop() 
+    if _realp: st.stop()
+    else: _simulator.toggle_quit_button_operation()
 
 class PartWrap():
     _widget = None
@@ -82,7 +101,7 @@ class PartWrap():
         if _simulator:
             w = None
             if self._frame_type is 'led':
-                w = tk.Label(_simulator.led_frame, text=self.name)
+                w = tk.Label(_simulator.led_frame, text=self.name, bg='white')
             elif self._frame_type is 'buzzer':
                 w = tk.Label(_simulator.buzzer_frame, text=self.name)
             elif self._frame_type is 'dc':
@@ -90,9 +109,10 @@ class PartWrap():
             elif self._frame_type is 'servo':
                 w = tk.Label(_simulator.servo_frame, text=self.name)
             elif self._frame_type is 'digital':
-                w = tk.Label(_simulator.digital_frame, text=self.name)
+                w = tk.Scale(_simulator.digital_frame, label=self.name,orient='h',from_=0,to=1)
+                w.set(1)
             elif self._frame_type is 'analog':
-                w = tk.Label(_simulator.analog_frame, text=self.name)            
+                w = tk.Scale(_simulator.analog_frame, label=self.name,orient='h',from_=0,to=100)
             w.pack()
             self._widget = w
             
@@ -100,7 +120,12 @@ class PartWrap():
         if _debug: _debug(f'{self.name}::attach',connector=connector)
         if _realp: self.attach(connector)
         else:
-            self._widget.configure(text=self.name+':'+str(connector))
+            t = self._frame_type
+            device_name = self.name+'@'+str(get_connector_name(connector))
+            if t is 'digital' or t is 'analog':
+                self._widget.configure(label=device_name)
+            else:
+                self._widget.configure(text=device_name)
 
 class BuzzerWrap(PartWrap,st.Buzzer):
     _frame_type = 'buzzer'
@@ -129,9 +154,11 @@ class LEDWrap(PartWrap,st.LED):
     def on(self):
         if _debug: _debug('LED::on')
         if _realp: st.LED.on(self)
+        else: self._widget.configure(bg='yellow')
     def off(self):
         if _debug: _debug('LED::off')
         if _realp: st.LED.off(self)
+        else: self._widget.configure(bg='white')
 
 class ServomotorWrap(PartWrap,st.Servomotor):
     _frame_type = 'servo'
@@ -148,7 +175,7 @@ class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
         if _realp: return self.getValue()
-        else:      return 1 
+        else:      return self._widget.get() 
 
 class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
     _frame_type = 'digital'

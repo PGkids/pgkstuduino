@@ -3,6 +3,8 @@ from pgkstuduino import *
 
 # 光センサの値をモニタリングする
 # A3スイッチで終了
+st_set_debug()
+st_set_real(False)
 
 connect(4)
 

@@ -2,7 +2,7 @@
 from pgkstuduino import *
 
 st_set_debug()
-#st_set_real(False)
+st_set_real(False)
 
 connect(4)
 p1,p2,p3,p4 = mkpart('PushSwitch:A0/A1/A2/A3')
