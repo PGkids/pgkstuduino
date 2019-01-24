@@ -4,20 +4,22 @@
 #import time
 from pgkstuduino import *
 import midiate
-#import devel
+
+#st_set_debug()
+st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
 
 connect(4)
 
 leds = mkpart('LED:A0/A1/A2')
 buzzer = mkpart('Buzzer:A5')
 sw = mkpart('PushSwitch:A3')
-job = sw.job_op_pushed(lambda:print('終了します'),once=True)
+job = sw.job_on_pushed(lambda:print('終了します'),once=True)
 
 mid = midiate.Midiator()
 mid.start_process()
 
-#indev = mid.open_input(name='loopMIDI Port');
-indev = mid.open_input(name='UM-1');
+indev = mid.open_input(name='loopMIDI Port');
+#indev = mid.open_input(name='UM-1');
 #indev = mid.open_input(name='USB Oxygen 8 v2');
 
 def st_bz_on(note):

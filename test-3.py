@@ -14,7 +14,7 @@ j2 = s2.job_monitor(lambda x:print(f'sound:value={x}') ,interval=0.3)
 def cancel_monitor():
     j1.cancel()
     j2.cancel()
-j3 = p.job_op_pushed(cancel_monitor)
+j3 = p.job_on_pushed(cancel_monitor)
 job = par(j1,j2,j3)
 job.start()
 job.join()

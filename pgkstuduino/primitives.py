@@ -33,24 +33,26 @@ class Simulator(tk.Frame):
         quit()
 
     def toggle_quit_button_operation(self):
-        self.quit_btn.configure(text='QUIT normally',
+        self.quit_btn.configure(text='EXIT normally',
                                 bg='white', fg='green', command=self.quit_normally)
     def create_widgets(self):
         self.quit_btn = tk.Button(self, text='ABORT this process immediately',
                               bg='blue', fg='white', command=self.abort)
-        self.quit_btn.pack()
+        self.quit_btn.pack(pady=8,padx=16,fill=tk.X)
         self.led_frame = tk.LabelFrame(self, text='LEDs')
-        self.led_frame.pack()
+        self.led_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
         self.buzzer_frame = tk.LabelFrame(self, text='Buzzers')
-        self.buzzer_frame.pack()
+        self.buzzer_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
         self.dc_frame = tk.LabelFrame(self, text='DC Motors')
-        self.dc_frame.pack()
+        self.dc_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
         self.servo_frame = tk.LabelFrame(self, text='Servomotors')
-        self.servo_frame.pack()
+        self.servo_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
         self.digital_frame = tk.LabelFrame(self, text='Digital Sensors')
-        self.digital_frame.pack()
+        self.digital_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
         self.analog_frame = tk.LabelFrame(self, text='Analog Sensors')
-        self.analog_frame.pack()
+        self.analog_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
+        self.accel_frame = tk.LabelFrame(self, text='Accelerometers')
+        self.accel_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
                         
 _debug = None
 _realp = True
@@ -82,8 +84,6 @@ def st_set_real(enable=True):
     thr = Thread(target=gui)
     thr.start()
     ev.wait()
-    btn = tk.Button(_simulator, text='test')
-    btn.pack()
 
 
 def st_start(com_port:str, baud_rate=38400):
@@ -100,21 +100,40 @@ class PartWrap():
     def __init__(self):
         if _simulator:
             w = None
-            if self._frame_type is 'led':
-                w = tk.Label(_simulator.led_frame, text=self.name, bg='white')
-            elif self._frame_type is 'buzzer':
-                w = tk.Label(_simulator.buzzer_frame, text=self.name)
+            t = self._frame_type
+            if t is 'led':
+                self._widget = tk.Label(_simulator.led_frame, text=self.name, bg='white')
+                self._widget.pack()
+            elif t is 'buzzer':
+                self._widget = tk.Scale(_simulator.buzzer_frame, label=self.name,orient='h',
+                                        bg='white', width='4', sliderlength='4', from_=0,to=128)
+                self._widget.pack()                
             elif self._frame_type is 'dc':
-                w = tk.Label(_simulator.dc_frame, text=self.name)
+                self._widget = tk.Scale(_simulator.dc_frame, label=self.name,orient='h',
+                                        bg='white', width='4', sliderlength='4', from_=0,to=100)
+                self._widget.pack()
             elif self._frame_type is 'servo':
-                w = tk.Label(_simulator.servo_frame, text=self.name)
+                self._widget = tk.Scale(_simulator.servo_frame, label=self.name,orient='h',
+                                        bg='white', width='4', sliderlength='4', from_=0,to=100)
+                self._widget.pack()
             elif self._frame_type is 'digital':
-                w = tk.Scale(_simulator.digital_frame, label=self.name,orient='h',from_=0,to=1)
-                w.set(1)
+                self._widget = tk.Scale(_simulator.digital_frame, label=self.name,orient='h',from_=0,to=1)
+                self._widget.set(1)
+                self._widget.pack()
             elif self._frame_type is 'analog':
-                w = tk.Scale(_simulator.analog_frame, label=self.name,orient='h',from_=0,to=100)
-            w.pack()
-            self._widget = w
+                self._widget = tk.Scale(_simulator.analog_frame, label=self.name,orient='h',from_=0,to=100)
+                self._widget.set(100)
+                self._widget.pack()
+            elif self._frame_type is 'accel':
+                self._widget = tk.Label(_simulator.accel_frame, text=self.name)
+                self._widget.pack()
+                self._x_widget = tk.Scale(_simulator.accel_frame, label='X',orient='h',from_=0,to=100)
+                self._x_widget.pack()
+                self._y_widget = tk.Scale(_simulator.accel_frame, label='Y',orient='h',from_=0,to=100)
+                self._y_widget.pack()                
+                self._z_widget = tk.Scale(_simulator.accel_frame, label='Z',orient='h',from_=0,to=100)
+                self._z_widget.pack()                
+            else: raise(RuntimeError)
             
     def attach(self,connector):
         if _debug: _debug(f'{self.name}::attach',connector=connector)
@@ -122,19 +141,25 @@ class PartWrap():
         else:
             t = self._frame_type
             device_name = self.name+'@'+str(get_connector_name(connector))
-            if t is 'digital' or t is 'analog':
+            if t is 'led' or t is 'accel':
+                self._widget.configure(text=device_name)
+            elif t is 'digital' or t is 'analog':
                 self._widget.configure(label=device_name)
             else:
-                self._widget.configure(text=device_name)
+                self._widget.configure(label=device_name, state='disabled')
 
 class BuzzerWrap(PartWrap,st.Buzzer):
     _frame_type = 'buzzer'
     def off(self):
         if _debug: _debug('Buzzer::off')
         if _realp: st.Buzzer.off(self)
+        else: self._widget.configure(bg='white')
     def on(self, sound, octave=0, duration=0):
         if _debug: _debug('Buzzer::on',sound=sound, octave=octave, duration=duration)
         if _realp: st.Buzzer.on(self, sound, octave=octave, duration=duration)
+        else:
+            self._widget.set(octave*12+sound)
+            self._widget.configure(bg='yellow')
     
 
 class DCMotorWrap(PartWrap,st.DCMotor):
@@ -194,9 +219,11 @@ class SoundSensorWrap(PartWrap,SensorWrap,st.SoundSensor):
     _frame_type = 'analog'
 
 class AccelerometerWrap(PartWrap,st.Accelerometer):
-    _frame_type = 'analog'
+    _frame_type = 'accel'
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
         if _realp: return self.getValue()
-        else:      return (0,0,0)
+        else:      return (self._x_widget.get(),
+                           self._y_widget.get(),
+                           self._z_widget.get())

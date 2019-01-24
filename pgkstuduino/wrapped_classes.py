@@ -95,7 +95,7 @@ class SensorMonitor():
         return RobotJob(f)
 
 class PGkPushSwitch(PushSwitchWrap,SensorMonitor):
-    def job_op_pushed(self, callback, once=True):
+    def job_on_pushed(self, callback, once=True):
         def fn(job):
             ignore = False
             while job.is_active():
