@@ -30,7 +30,6 @@ class Simulator(tk.Frame):
         os._exit(-1)
     def quit_normally(self):
         self.master.quit()
-        quit()
 
     def toggle_quit_button_operation(self):
         self.quit_btn.configure(text='EXIT normally',
