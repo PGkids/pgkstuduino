@@ -158,8 +158,9 @@ class BuzzerWrap(PartWrap,st.Buzzer):
         if _debug: _debug('Buzzer::on',sound=sound, octave=octave, duration=duration)
         if _realp: st.Buzzer.on(self, sound, octave=octave, duration=duration)
         else:
+            self._widget.configure(bg='yellow', state='active')
             self._widget.set(octave*12+sound)
-            self._widget.configure(bg='yellow')
+            self._widget.configure(state='disabled')
     
 
 class DCMotorWrap(PartWrap,st.DCMotor):
@@ -167,12 +168,18 @@ class DCMotorWrap(PartWrap,st.DCMotor):
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
         if _realp: st.DCMotor.move(self, motion)
+        else: self._widget.configure(bg='yellow')
     def stop(self, motion):
         if _debug: _debug('DCMotor::stop',motion=motion)
         if _realp: st.DCMotor.stop(self, motion)
+        else: self._widget.configure(bg='white')
     def setPower(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
         if _realp: st.DCMotor.power(self, power)
+        else:
+            self._widget.configure(state='active')
+            self._widget.set(power)
+            self._widget.configure(state='disabled')
 
 class LEDWrap(PartWrap,st.LED):
     _frame_type = 'led'
@@ -190,11 +197,18 @@ class ServomotorWrap(PartWrap,st.Servomotor):
     def setAngle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         if _realp: st.Servomotor.setAngle(self,angle)
+        else:
+            self._widget.configure(state='active', bg='yellow')
+            self._widget.set(angle)
+            self._widget.configure(state='disabled', bg='white')
 
     @staticmethod
     def syncMove(self, servos, angles, delay):
-        if _debug: _debug('ServoMotor::setAngle', servos=servos, angles=angles, delay=delay)
-        if _realp: st.Servomotor.syncMove(serves, angles, delay)
+        if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
+        if _realp: st.Servomotor.syncMove(servos, angles, delay)
+        else:
+            for (servo,angle) in zip(servos,angles):
+                servo.setAngle(angle)
 
 class SensorWrap():
     def getValue(self):

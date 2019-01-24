@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from pgkstuduino import *
 
-#st_set_debug()
+st_set_debug()
 st_set_real(False) # 実機を接続する場合はこの行をコメントアウトせよ
 
 connect(4)
@@ -17,7 +17,15 @@ j1 = par(led1.job_blink(n=5,on=0.4,off=0.1),
          led3.job_blink(n=3,on=1,off=0.2))
 #j2 = par(s1.job_monitor(lambda x:print(f'light:{x}'),interval=1),
 #         s2.job_monitor(lambda x:print(f'light:{x}'),interval=1))
-j21 = s1.job_monitor(lambda x:print(f'light:{x}'),interval=1)
+def monitor1(x):
+    print(f'light:{x}')
+    if x < 50:
+        dc1.setPower(x)
+        dc1.moveon()
+    else:
+        sv1.setAngle(x)
+        dc1.stop()
+j21 = s1.job_monitor(monitor1,interval=1)
 j22 = s2.job_monitor(lambda x:print(f'accel:{x}'),interval=1)
 j2 = par(j21,j22)
 def cancel_job():

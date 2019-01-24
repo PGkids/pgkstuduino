@@ -63,7 +63,7 @@ class PGkDCMotor(DCMotorWrap):
         self.move(FWD if forward else BCK)
 
     # DCMotor.stop()を遮蔽することに注意（互換性あり）
-    def stop(motion=BRAKE, brake=True):
+    def stop(self,motion=BRAKE, brake=True):
         if motion==BRAKE and not brake: motion = COAST
         DCMotorWrap.stop(self, motion)
 
