@@ -2,9 +2,8 @@
 from pgkstuduino import *
 from sys import argv
 
-st_set_debug('-debug' in argv)
+st_set_debug('-debug' in argv)  
 st_set_real(False)
-
 
 connect(4)
 
