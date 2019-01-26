@@ -2,10 +2,8 @@
 # Copyright (c) 2019 PGkids Laboratory
 
 import os
-import studuino
-st = studuino
-import tkinter
-tk = tkinter
+import studuino as st
+import tkinter as tk
 from threading import Thread,Event
 
 _reversed_conn_dic = {st.A0:'A0', st.A1:'A1', st.A2:'A2', st.A3:'A3',
