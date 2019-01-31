@@ -88,12 +88,12 @@ def st_set_real(enable=True):
 
 def st_start(com_port:str, baud_rate=38400):
     if _debug: _debug('st_start', com_port=com_port, baud_rate=baud_rate)
-    if _realp: st.start(com_port, baud_rate)
+    if _realp: st.start(com_port)# st.start(com_port, baud_rate)
 
 def st_stop():
     if _debug: _debug('st_stop')
     if _realp: st.stop()
-    else: _simulator.toggle_quit_button_operation()
+    _simulator.toggle_quit_button_operation()
 
 class PartWrap():
     _widget = None
@@ -213,7 +213,9 @@ class ServomotorWrap(PartWrap,st.Servomotor):
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
-        if _realp: return st.Sensor.getValue(self)
+        if _realp:
+            #print(st.Sensor.getValue(self))
+            return st.Sensor.getValue(self)
         else:      return self._widget.get() 
 
 class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
