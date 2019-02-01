@@ -150,6 +150,10 @@ class PartWrap():
 
 class BuzzerWrap(PartWrap,st.Buzzer):
     _frame_type = 'buzzer'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.Buzzer.__init__(self)
+        
     def off(self):
         if _debug: _debug('Buzzer::off')
         if _realp: st.Buzzer.off(self)
@@ -165,6 +169,10 @@ class BuzzerWrap(PartWrap,st.Buzzer):
 
 class DCMotorWrap(PartWrap,st.DCMotor):
     _frame_type = 'dc'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.DCMotor.__init__(self)
+
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
         if _realp: st.DCMotor.move(self, motion)
@@ -183,6 +191,10 @@ class DCMotorWrap(PartWrap,st.DCMotor):
 
 class LEDWrap(PartWrap,st.LED):
     _frame_type = 'led'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.LED.__init__(self)
+
     def on(self):
         if _debug: _debug('LED::on')
         if _realp: st.LED.on(self)
@@ -194,6 +206,10 @@ class LEDWrap(PartWrap,st.LED):
 
 class ServomotorWrap(PartWrap,st.Servomotor):
     _frame_type = 'servo'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.Servomotor.__init__(self)
+
     def setAngle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         if _realp: st.Servomotor.setAngle(self,angle)
@@ -220,22 +236,43 @@ class SensorWrap():
 
 class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
     _frame_type = 'digital'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.PushSwitch.__init__(self)
+
 
 class TouchSensorWrap(PartWrap,SensorWrap,st.TouchSensor):
     _frame_type = 'digital'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.TouchSensor.__init__(self)
+
 
 class IRPhotoreflectorWrap(PartWrap,SensorWrap,st.IRPhotoreflector):
     _frame_type = 'analog'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.IRPhotoreflector.__init__(self)
+
+
 
 class LightSensorWrap(PartWrap,SensorWrap,st.LightSensor):
     _frame_type = 'analog'
-    pass
+    def __init__(self):
+        super().__init__()
+        if _realp: st.LightSensor.__init__(self)
 
 class SoundSensorWrap(PartWrap,SensorWrap,st.SoundSensor):
     _frame_type = 'analog'
-
+    def __init__(self):
+        super().__init__()
+        if _realp: st.SoundSensor.__init__(self)
+        
 class AccelerometerWrap(PartWrap,st.Accelerometer):
     _frame_type = 'accel'
+    def __init__(self):
+        super().__init__()
+        if _realp: st.Accelerometer.__init__(self)
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
