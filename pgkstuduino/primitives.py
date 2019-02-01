@@ -86,9 +86,9 @@ def st_set_real(enable=True):
     ev.wait()
 
 
-def st_start(com_port:str, baud_rate=38400):
+def st_start(com_port:str):
     if _debug: _debug('st_start', com_port=com_port, baud_rate=baud_rate)
-    if _realp: st.start(com_port)# st.start(com_port, baud_rate)
+    if _realp: st.start(com_port)
 
 def st_stop():
     if _debug: _debug('st_stop')
