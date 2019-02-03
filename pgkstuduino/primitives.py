@@ -30,26 +30,47 @@ class Simulator(tk.Frame):
         self.master.quit()
 
     def toggle_quit_button_operation(self):
-        self.quit_btn.configure(text='EXIT normally',
+        self.quit_btn.configure(text='EXIT NORMALLY',
                                 bg='white', fg='green', command=self.quit_normally)
     def create_widgets(self):
         self.quit_btn = tk.Button(self, text='ABORT this process immediately',
                               bg='blue', fg='white', command=self.abort)
         self.quit_btn.pack(pady=8,padx=16,fill=tk.X)
-        self.led_frame = tk.LabelFrame(self, text='LEDs')
+        copyright = tk.Label(self, padx=10, fg='darkgreen',
+                             text='STUDUINO SIMULATOR / REALTIME MONITOR\npgkstuduino. Copyright (c) 2019 PGkids Laboratory')
+        copyright.pack(side=tk.TOP)
+        frame = tk.Frame(self)
+        frame.pack(side=tk.TOP)
+        self.led_frame = tk.LabelFrame(frame, text='LEDs')
         self.led_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.buzzer_frame = tk.LabelFrame(self, text='Buzzers')
+        self.buzzer_frame = tk.LabelFrame(frame, text='Buzzers')
         self.buzzer_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.dc_frame = tk.LabelFrame(self, text='DC Motors')
+        self.dc_frame = tk.LabelFrame(frame, text='DC Motors')
         self.dc_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.servo_frame = tk.LabelFrame(self, text='Servomotors')
+        self.servo_frame = tk.LabelFrame(frame, text='Servomotors')
         self.servo_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.digital_frame = tk.LabelFrame(self, text='Digital Sensors')
+        self.digital_frame = tk.LabelFrame(frame, text='Digital Sensors')
         self.digital_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.analog_frame = tk.LabelFrame(self, text='Analog Sensors')
+        self.analog_frame = tk.LabelFrame(frame, text='Analog Sensors')
         self.analog_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
-        self.accel_frame = tk.LabelFrame(self, text='Accelerometers')
+        self.accel_frame = tk.LabelFrame(frame, text='Accelerometers')
         self.accel_frame.pack(side=tk.LEFT,anchor=tk.N,padx=8)
+
+    def create_label(self,text):
+        w = tk.Label(self, bg='white', padx=8, text=text)
+        w.pack(side=tk.TOP);
+        def set(text):
+            w.configure(text=text)
+        return set
+    def create_button(self,text, command=None):
+        if command is None:
+            command = lambda:print(text,'PRESSED!')
+        w = tk.Button(self,text=text, bg='white', padx=8, command=command)
+        w.pack(side=tk.TOP)
+        def set(text):
+            w.configure(text=text)
+        return set
+    
                         
 _debug = None
 _realp = True
@@ -74,7 +95,7 @@ def st_set_real(enable=True):
     def gui():
         root = tk.Tk()
         #root.geometry('600x400')
-        root.title('Studuino Simulator')
+        root.title('STUDUINO SIMULATOR / REALTIME MONITOR')
         sim = Simulator(root)
         global _simulator
         _simulator = sim
@@ -85,7 +106,20 @@ def st_set_real(enable=True):
     thr.start()
     ev.wait()
 
+def _check_simulator():
+    if not _simulator:
+        raise Exception('Simulator not initialized')
 
+def create_label(text='user label'):
+    _check_simulator()
+    return _simulator.create_label(text)
+
+def create_button(text='user button', command=None):
+    _check_simulator()
+    return _simulator.create_button(text,command=command)
+
+
+    
 def st_start(com_port:str):
     if _debug: _debug('st_start', com_port=com_port, baud_rate=baud_rate)
     if _realp: st.start(com_port)
@@ -138,7 +172,7 @@ class PartWrap():
     def attach(self,connector):
         if _debug: _debug(f'{self.name}::attach',connector=connector)
         if _realp: st.Part.attach(self,connector)
-        else:
+        if _simulator:
             t = self._frame_type
             device_name = self.name+'@'+str(get_connector_name(connector))
             if t is 'led' or t is 'accel':
@@ -156,15 +190,14 @@ class BuzzerWrap(PartWrap,st.Buzzer):
         
     def off(self):
         if _debug: _debug('Buzzer::off')
+        self._widget.configure(bg='white')
         if _realp: st.Buzzer.off(self)
-        else: self._widget.configure(bg='white')
     def on(self, sound, octave=0, duration=0):
         if _debug: _debug('Buzzer::on',sound=sound, octave=octave, duration=duration)
+        self._widget.configure(bg='yellow', state='active')
+        self._widget.set(octave*12+sound)
+        self._widget.configure(state='disabled')
         if _realp: st.Buzzer.on(self, sound, octave=octave, duration=duration)
-        else:
-            self._widget.configure(bg='yellow', state='active')
-            self._widget.set(octave*12+sound)
-            self._widget.configure(state='disabled')
     
 
 class DCMotorWrap(PartWrap,st.DCMotor):
@@ -175,19 +208,18 @@ class DCMotorWrap(PartWrap,st.DCMotor):
 
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
+        self._widget.configure(bg='yellow' if motion == st.FWD else 'lightblue')
         if _realp: st.DCMotor.move(self, motion)
-        else: self._widget.configure(bg='yellow')
     def stop(self, motion):
         if _debug: _debug('DCMotor::stop',motion=motion)
+        self._widget.configure(bg='white')
         if _realp: st.DCMotor.stop(self, motion)
-        else: self._widget.configure(bg='white')
     def setPower(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
-        if _realp: st.DCMotor.power(self, power)
-        else:
-            self._widget.configure(state='active')
-            self._widget.set(power)
-            self._widget.configure(state='disabled')
+        self._widget.configure(state='active')
+        self._widget.set(power)
+        self._widget.configure(state='disabled')
+        if _realp: st.DCMotor.setPower(self, power)
 
 class LEDWrap(PartWrap,st.LED):
     _frame_type = 'led'
@@ -197,12 +229,12 @@ class LEDWrap(PartWrap,st.LED):
 
     def on(self):
         if _debug: _debug('LED::on')
+        self._widget.configure(bg='yellow')
         if _realp: st.LED.on(self)
-        else: self._widget.configure(bg='yellow')
     def off(self):
         if _debug: _debug('LED::off')
+        self._widget.configure(bg='white')
         if _realp: st.LED.off(self)
-        else: self._widget.configure(bg='white')
 
 class ServomotorWrap(PartWrap,st.Servomotor):
     _frame_type = 'servo'
@@ -210,21 +242,22 @@ class ServomotorWrap(PartWrap,st.Servomotor):
         super().__init__()
         if _realp: st.Servomotor.__init__(self)
 
+    def _set_angle_for_simulator(self, angle):
+        self._widget.configure(state='active', bg='yellow')
+        self._widget.set(angle)
+        self._widget.configure(state='disabled', bg='white')
+        
     def setAngle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
+        _set_angle_for_simulator(angle)
         if _realp: st.Servomotor.setAngle(self,angle)
-        else:
-            self._widget.configure(state='active', bg='yellow')
-            self._widget.set(angle)
-            self._widget.configure(state='disabled', bg='white')
 
     @staticmethod
     def syncMove(self, servos, angles, delay):
         if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
+        for (servo,angle) in zip(servos,angles):
+            servo._set_angle_for_simulator(angle)
         if _realp: st.Servomotor.syncMove(servos, angles, delay)
-        else:
-            for (servo,angle) in zip(servos,angles):
-                servo.setAngle(angle)
 
 class SensorWrap():
     def getValue(self):

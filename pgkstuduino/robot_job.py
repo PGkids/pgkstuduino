@@ -87,6 +87,7 @@ class RobotJob():
         if self.__active:
             self.__active = False
             self.__event.set()
+        return self
 
 def mkjob(proc, *args) -> RobotJob:
     return RobotJob(lambda job:proc(*args))

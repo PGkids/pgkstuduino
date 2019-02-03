@@ -49,7 +49,7 @@ class PGkBuzzer(BuzzerWrap):
         
         
 class PGkDCMotor(DCMotorWrap):
-    def job_drive(self,sec,forward=True,brake=True):
+    def job_drive(self,sec,*,forward=True,brake=True):
         def fn(job):
             if job.is_active():
                 print('moveon!',forward)
@@ -59,11 +59,11 @@ class PGkDCMotor(DCMotorWrap):
                 self.stop(brake=brake)
         return RobotJob(fn)
 
-    def moveon(self,forward=True):
+    def moveon(self,*,forward=True):
         self.move(FWD if forward else BCK)
 
     # DCMotor.stop()を遮蔽することに注意（互換性あり）
-    def stop(self,motion=BRAKE, brake=True):
+    def stop(self,*,motion=BRAKE, brake=True):
         if motion==BRAKE and not brake: motion = COAST
         DCMotorWrap.stop(self, motion)
 

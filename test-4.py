@@ -17,8 +17,8 @@ job = sw.job_on_pushed(lambda:print('終了します'),once=True)
 mid = midiate.Midiator()
 mid.start_process()
 
-#indev = mid.open_input(name='loopMIDI Port');
-indev = mid.open_input(name='UM-1');
+indev = mid.open_input(name='loopMIDI Port');
+#indev = mid.open_input(name='UM-1');
 #indev = mid.open_input(name='USB Oxygen 8 v2');
 
 def st_bz_on(note):
