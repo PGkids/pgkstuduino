@@ -25,8 +25,7 @@ dc_left,dc_right = mkpart('DCMotor:M1/M2')
 led_left,led_accel,led_right = mkpart('LED:A0/A1/A2')
 buzzer = mkpart('Buzzer:A3')
 direction = None # 'left' ir 'right'
-blinkjob = None
-buzzerjob = None
+back_job = None
 
 # J.S.Bachの教会カンタータの有名な旋律
 songdata = [0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1,2,5,4,2,4,
@@ -34,16 +33,16 @@ songdata = [0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1
             7,-5,-3,-1,2,1,1,4,2,2,5,4,5,2,-3,-7,-5,-3,-2,7,5,7,4,1,-3,-1,1,
             2,5,4,5,9,7,7,10,9,9,14,13,14,9,5,2,4,5, 10,9,7,5,4,2,-3,2,1,2,5,9,14,9,5,2]
 
-def new_buzzer_job():
+def mk_buzzer_job():
     cnt = 0
     def perform_song():
         nonlocal cnt
         current_note = 60 + songdata[cnt%len(songdata)]
         cnt += 1
         buzzer.noteon(current_note)
-        sleep(0.2)
+        sleep(0.15)
         buzzer.noteoff()
-    return rep(mkjob(perform_song))
+    return rep(mkjob(perform_song),interval=0.05)
 
 status = create_label('status')
 user_btn = create_button()
@@ -81,22 +80,18 @@ while True:
             led_accel.on()
             status('出発進行～ッ！')
         else:
+            back_job = par(led_accel.job_blink(on=0.2,off=0.3),
+                           mk_buzzer_job())
+            back_job.start()
             status('バックします。ご注意ください！')
-            blinkjob = led_accel.job_blink(on=0.2,off=0.3)
-            blinkjob.start()
-            buzzerjob = new_buzzer_job()
-            buzzerjob.start()
     elif e.type==pgm.JOYBUTTONUP and (e.button==JS_ACCELBTN or
                                       e.button==JS_RACCELBTN):
         dc_left.stop()
         dc_right.stop()
         status('停車中')
-        if blinkjob:
-            blinkjob.cancel().join()
-            #blinkjob.join()
-            blinkjob = None
-            buzzerjob.cancel().join()
-            buzzerjob = None
+        if back_job: 
+            back_job.cancel().join()
+            back_job = None
         else:
             led_accel.off()
 

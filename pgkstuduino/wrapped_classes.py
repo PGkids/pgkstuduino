@@ -18,12 +18,13 @@ class PGkLED(LEDWrap):
                 if cnt is not None:
                     if cnt==0: break
                     cnt -= 1
-                print('on')
+                #print('on')
                 self.on()
                 if not job._safe_sleep(on):
                     # todo: off にしてから
+                    self.off()
                     break
-                print('off')
+                #print('off')
                 self.off()
                 job._safe_sleep(off)
                 

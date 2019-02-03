@@ -111,7 +111,7 @@ def par(*jobs) -> RobotJob:
                 break
         # join all jobs
         for job in jobs:
-            job.join()
+            job.cancel().join()
 
     return RobotJob(fn)
 
@@ -129,7 +129,7 @@ def seq(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
-def rep(job, n=None) -> RobotJob:
+def rep(job, *, n=None, interval=None) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
         cnt = n
@@ -141,6 +141,8 @@ def rep(job, n=None) -> RobotJob:
             if not master_job._wait_for_event():
                 job.cancel()
             job.join()
+            if interval and not master_job._safe_sleep(interval):
+                break
             
     return RobotJob(fn)
 
