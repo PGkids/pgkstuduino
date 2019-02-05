@@ -10,6 +10,8 @@ JS_ACCELBTN = 3 #アクセルボタン
 JS_RACCELBTN = 1 #反転アクセルボタン
 
 pgm.mixer.init(44100, -16, 2, 2048)
+sound_up   = pgm.mixer.Sound('js-up.wav')
+sound_down = pgm.mixer.Sound('js-down.wav')
 
 pgm.init()
 pgm.joystick.init()
@@ -23,7 +25,7 @@ except pgm.error:
 
 st_set_debug('-debug' in argv)
 st_set_real('-devel' not in argv)
-connect(3)
+connect(4)
 
 dc_left,dc_right = mkpart('DCMotor:M1/M2')
 led_left,led_accel,led_right = mkpart('LED:A0/A1/A2')
@@ -31,7 +33,7 @@ buzzer = mkpart('Buzzer:A3')
 direction = None # 'left' ir 'right'
 back_job = None
 
-powers = [(20,0),(30,5),(50,10),(70,15),(85,20),(100,30)]
+powers = [(50,30),(60,30),(70,40),(80,40),(90,50),(100,50)]
 power_index = len(powers) - 1
 
 # J.S.Bachの教会カンタータの有名な旋律
@@ -86,10 +88,12 @@ while True:
     elif e.type==pgm.JOYAXISMOTION and e.axis==1:
         # 十字ボタンY軸 (パワー制御)
         if e.value > 0.5:
-            if power_index > 0: power_index -= 1
+            if power_index > 0:
+                power_index -= 1
+                sound_down.play();
             else: continue
         elif e.value < -0.5:
-            if power_index < len(powers)-1: power_index += 1
+            if power_index < len(powers)-1: power_index += 1; sound_up.play()
             else: continue
         else:
             continue

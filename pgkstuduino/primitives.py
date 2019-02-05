@@ -37,7 +37,8 @@ class Simulator(tk.Frame):
                               bg='blue', fg='white', command=self.abort)
         self.quit_btn.pack(pady=8,padx=16,fill=tk.X)
         copyright = tk.Label(self, padx=10, fg='darkgreen',
-                             text='STUDUINO SIMULATOR / REALTIME MONITOR\npgkstuduino. Copyright (c) 2019 PGkids Laboratory')
+                             text='STUDUINO SIMULATOR / REALTIME MONITOR / DEVELOPMENT ENVIRONMENT\n'
+                             'pgkstuduino. Copyright (c) 2019 PGkids Laboratory')
         copyright.pack(side=tk.TOP)
         frame = tk.Frame(self)
         frame.pack(side=tk.TOP)
@@ -95,7 +96,7 @@ def st_set_real(enable=True):
     def gui():
         root = tk.Tk()
         #root.geometry('600x400')
-        root.title('STUDUINO SIMULATOR / REALTIME MONITOR')
+        root.title('pgkstuduino panel')
         sim = Simulator(root)
         global _simulator
         _simulator = sim
