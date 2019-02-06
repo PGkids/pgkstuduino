@@ -33,7 +33,7 @@ back_job = None
 
 powers = [(50,30),(60,30),(70,40),(80,40),(90,50),(100,50)]
 power_index = len(powers) - 1
-dc_left.power = dc_right.power = powers[power_index][0]
+dc_left.level = dc_right.level = powers[power_index][0]
 
 # J.S.Bachの教会カンタータの有名な旋律
 songdata = [0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1,2,5,4,2,4,
@@ -68,15 +68,15 @@ while True:
         # 十字ボタンX軸 (方向制御)
         hi,lo = powers[power_index]
         if e.value > 0.5: #############  右折   ################
-            dc_left.power,dc_right.power = hi,lo
+            dc_left.level,dc_right.level = hi,lo
             led_right.on()
             direction = 'right'
         elif e.value < -0.5: ##########  左折   ################
-            dc_left.power,dc_right.power = lo,hi
+            dc_left.level,dc_right.level = lo,hi
             led_left.on()
             direction = 'left'
         else:                ##########  直進   #################
-            dc_left.power,dc_right.power = hi,hi
+            dc_left.level,dc_right.level = hi,hi
             if direction   is 'left':  led_left.off()
             elif direction is 'right': led_right.off()
             direction = None
@@ -94,9 +94,9 @@ while True:
         else:
             continue
         hi,lo = powers[power_index]
-        if direction   is 'left':  dc_left.power,dc_right.power = lo,hi
-        elif direction is 'right': dc_left.power,dc_right.power = hi,lo
-        else:                      dc_left.power,dc_right.power = hi,hi
+        if direction   is 'left':  dc_left.level,dc_right.level = lo,hi
+        elif direction is 'right': dc_left.level,dc_right.level = hi,lo
+        else:                      dc_left.level,dc_right.level = hi,hi
         set_power_status()
             
     elif e.type==pgm.JOYBUTTONDOWN and (e.button==JS_ACCELBTN or

@@ -208,7 +208,7 @@ class DCMotorWrap(PartWrap,st.DCMotor):
         self.__cur_power = 0
         if _realp:
             st.DCMotor.__init__(self)
-            st.DCMotor.setPower(self,__cur_power)
+            #st.DCMotor.setPower(self, self.__cur_power)
 
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
@@ -218,13 +218,13 @@ class DCMotorWrap(PartWrap,st.DCMotor):
         if _debug: _debug('DCMotor::stop',motion=motion)
         self._widget.configure(bg='white')
         if _realp: st.DCMotor.stop(self, motion)
-    def setPower(self, power):
+    def _set_dc_power(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
         self._widget.configure(state='active')
         self._widget.set(power)
         self._widget.configure(state='disabled')
         if _realp: st.DCMotor.setPower(self, power)
-    def getPower(self):
+    def _get_dc_power(self):
         return __cur_power
 
 class LEDWrap(PartWrap,st.LED):

@@ -50,7 +50,7 @@ class PGkBuzzer(BuzzerWrap):
         
         
 class PGkDCMotor(DCMotorWrap):
-    power = property(DCMotorWrap.getPower, DCMotorWrap.setPower)
+    level = property(DCMotorWrap._get_dc_power, DCMotorWrap._set_dc_power)
     
     def job_drive(self,sec,*,forward=True,brake=True):
         def fn(job):
