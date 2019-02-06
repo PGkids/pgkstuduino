@@ -132,35 +132,38 @@ def st_stop():
 
 class PartWrap():
     _widget = None
-    def __init__(self):
+    _part   = None
+    def __init__(self, real_part_class, name):
+        self.name = name
+        if _realp: self._part = real_part_class()
         if _simulator:
             w = None
             t = self._frame_type
             if t is 'led':
-                self._widget = tk.Label(_simulator.led_frame, text=self.name, bg='white')
+                self._widget = tk.Label(_simulator.led_frame, text=name, bg='white')
                 self._widget.pack()
             elif t is 'buzzer':
-                self._widget = tk.Scale(_simulator.buzzer_frame, label=self.name,orient='h',
+                self._widget = tk.Scale(_simulator.buzzer_frame, label=name,orient='h',
                                         bg='white', width='4', sliderlength='4', from_=0,to=128)
                 self._widget.pack()                
             elif self._frame_type is 'dc':
-                self._widget = tk.Scale(_simulator.dc_frame, label=self.name,orient='h',
+                self._widget = tk.Scale(_simulator.dc_frame, label=name,orient='h',
                                         bg='white', width='4', sliderlength='4', from_=0,to=100)
                 self._widget.pack()
             elif self._frame_type is 'servo':
-                self._widget = tk.Scale(_simulator.servo_frame, label=self.name,orient='h',
+                self._widget = tk.Scale(_simulator.servo_frame, label=name,orient='h',
                                         bg='white', width='4', sliderlength='4', from_=0,to=100)
                 self._widget.pack()
             elif self._frame_type is 'digital':
-                self._widget = tk.Scale(_simulator.digital_frame, label=self.name,orient='h',from_=0,to=1)
+                self._widget = tk.Scale(_simulator.digital_frame, label=name,orient='h',from_=0,to=1)
                 self._widget.set(1)
                 self._widget.pack()
             elif self._frame_type is 'analog':
-                self._widget = tk.Scale(_simulator.analog_frame, label=self.name,orient='h',from_=0,to=100)
+                self._widget = tk.Scale(_simulator.analog_frame, label=name,orient='h',from_=0,to=100)
                 self._widget.set(100)
                 self._widget.pack()
             elif self._frame_type is 'accel':
-                self._widget = tk.Label(_simulator.accel_frame, text=self.name)
+                self._widget = tk.Label(_simulator.accel_frame, text=name)
                 self._widget.pack()
                 self._x_widget = tk.Scale(_simulator.accel_frame, label='X',orient='h',from_=0,to=100)
                 self._x_widget.pack()
@@ -169,10 +172,14 @@ class PartWrap():
                 self._z_widget = tk.Scale(_simulator.accel_frame, label='Z',orient='h',from_=0,to=100)
                 self._z_widget.pack()                
             else: raise(RuntimeError)
-            
+
+    def _configure_after_attach(self):
+        pass
+    
     def attach(self,connector):
         if _debug: _debug(f'{self.name}::attach',connector=connector)
-        if _realp: st.Part.attach(self,connector)
+        if _realp: self._part.attach(connector)
+        self._configure_after_attach()
         if _simulator:
             t = self._frame_type
             device_name = self.name+'@'+str(get_connector_name(connector))
@@ -183,70 +190,67 @@ class PartWrap():
             else:
                 self._widget.configure(label=device_name, state='disabled')
 
-class BuzzerWrap(PartWrap,st.Buzzer):
+class BuzzerWrap(PartWrap):
     _frame_type = 'buzzer'
     def __init__(self):
-        super().__init__()
-        if _realp: st.Buzzer.__init__(self)
+        super().__init__(st.Buzzer,'Buzzer')
         
     def off(self):
         if _debug: _debug('Buzzer::off')
         self._widget.configure(bg='white')
-        if _realp: st.Buzzer.off(self)
+        if _realp: self._part.off()
     def on(self, sound, octave=0, duration=0):
         if _debug: _debug('Buzzer::on',sound=sound, octave=octave, duration=duration)
         self._widget.configure(bg='yellow', state='active')
         self._widget.set(octave*12+sound)
         self._widget.configure(state='disabled')
-        if _realp: st.Buzzer.on(self, sound, octave=octave, duration=duration)
+        if _realp: self._part.on(sound, octave=octave, duration=duration)
     
 
-class DCMotorWrap(PartWrap,st.DCMotor):
+class DCMotorWrap(PartWrap):
     _frame_type = 'dc'
     def __init__(self):
-        super().__init__()
+        super().__init__(st.DCMotor,'DC Motor')
         self.__cur_power = 0
-        if _realp:
-            st.DCMotor.__init__(self)
-            #st.DCMotor.setPower(self, self.__cur_power)
+
+    def _configure_after_attach(self):
+        if _realp: self._part.setPower(self.__cur_power)
 
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
         self._widget.configure(bg='yellow' if motion == st.FWD else 'lightblue')
-        if _realp: st.DCMotor.move(self, motion)
+        if _realp: self._part.move(motion)
     def stop(self, motion):
         if _debug: _debug('DCMotor::stop',motion=motion)
         self._widget.configure(bg='white')
-        if _realp: st.DCMotor.stop(self, motion)
-    def _set_dc_power(self, power):
+        if _realp: self._part.stop(motion)
+    def set_power(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
         self._widget.configure(state='active')
         self._widget.set(power)
         self._widget.configure(state='disabled')
-        if _realp: st.DCMotor.setPower(self, power)
-    def _get_dc_power(self):
+        if _realp: self._part.setPower(power)
+    def get_power(self):
         return __cur_power
 
-class LEDWrap(PartWrap,st.LED):
+class LEDWrap(PartWrap):
     _frame_type = 'led'
     def __init__(self):
-        super().__init__()
-        if _realp: st.LED.__init__(self)
+        super().__init__(st.LED,'LED')
 
     def on(self):
         if _debug: _debug('LED::on')
         self._widget.configure(bg='yellow')
-        if _realp: st.LED.on(self)
+        if _realp: self._part.on()
     def off(self):
         if _debug: _debug('LED::off')
         self._widget.configure(bg='white')
-        if _realp: st.LED.off(self)
+        if _realp: self._part.off()
 
-class ServomotorWrap(PartWrap,st.Servomotor):
+class ServomotorWrap(PartWrap):
     _frame_type = 'servo'
     def __init__(self):
-        super().__init__()
-        if _realp: st.Servomotor.__init__(self)
+        super().__init__(st.Servomotor,'Servo')
 
     def _set_angle_for_simulator(self, angle):
         self._widget.configure(state='active', bg='yellow')
@@ -256,66 +260,56 @@ class ServomotorWrap(PartWrap,st.Servomotor):
     def setAngle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         _set_angle_for_simulator(angle)
-        if _realp: st.Servomotor.setAngle(self,angle)
+        if _realp: self._part.setAngle(angle)
 
     @staticmethod
     def syncMove(self, servos, angles, delay):
         if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
         for (servo,angle) in zip(servos,angles):
             servo._set_angle_for_simulator(angle)
-        if _realp: st.Servomotor.syncMove(servos, angles, delay)
+        if _realp: self._part.syncMove(servos, angles, delay)
 
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
         if _realp:
             #print(st.Sensor.getValue(self))
-            return st.Sensor.getValue(self)
+            return self._part.getValue()
         else:      return self._widget.get() 
 
-class PushSwitchWrap(PartWrap,SensorWrap,st.PushSwitch):
+class PushSwitchWrap(PartWrap,SensorWrap):
     _frame_type = 'digital'
     def __init__(self):
-        super().__init__()
-        if _realp: st.PushSwitch.__init__(self)
+        super().__init__(st.PushSwitch,'Push Switch')
 
-
-class TouchSensorWrap(PartWrap,SensorWrap,st.TouchSensor):
+class TouchSensorWrap(PartWrap,SensorWrap):
     _frame_type = 'digital'
     def __init__(self):
-        super().__init__()
-        if _realp: st.TouchSensor.__init__(self)
+        super().__init__(st.TouchSensor, 'Touch Sensor')
 
-
-class IRPhotoreflectorWrap(PartWrap,SensorWrap,st.IRPhotoreflector):
+class IRPhotoreflectorWrap(PartWrap,SensorWrap):
     _frame_type = 'analog'
     def __init__(self):
-        super().__init__()
-        if _realp: st.IRPhotoreflector.__init__(self)
+        super().__init__(st.IRPhotoreflector, 'Photoreflector')
 
-
-
-class LightSensorWrap(PartWrap,SensorWrap,st.LightSensor):
+class LightSensorWrap(PartWrap,SensorWrap):
     _frame_type = 'analog'
     def __init__(self):
-        super().__init__()
-        if _realp: st.LightSensor.__init__(self)
+        super().__init__(st.LightSensor, 'Light Sensor')
 
-class SoundSensorWrap(PartWrap,SensorWrap,st.SoundSensor):
+class SoundSensorWrap(PartWrap,SensorWrap):
     _frame_type = 'analog'
     def __init__(self):
-        super().__init__()
-        if _realp: st.SoundSensor.__init__(self)
+        super().__init__(st.SoundSensor, 'Sound Sensor')
         
-class AccelerometerWrap(PartWrap,st.Accelerometer):
+class AccelerometerWrap(PartWrap):
     _frame_type = 'accel'
     def __init__(self):
-        super().__init__()
-        if _realp: st.Accelerometer.__init__(self)
+        super().__init__(st.Accelerometer, 'Accelerometer')
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
-        if _realp: return st.Accelerometer.getValue(self)
+        if _realp: return self._part.getValue()
         else:      return (self._x_widget.get(),
                            self._y_widget.get(),
                            self._z_widget.get())

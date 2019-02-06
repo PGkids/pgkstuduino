@@ -38,7 +38,7 @@ class PGkBuzzer(BuzzerWrap):
         elif duration: d = duration
         
         BuzzerWrap.on(self, note, octave=octave, duration=d)
-
+        
     ## MIDI style
     def noteon(self, note, sec=None):
         self.on(note%12, note//12, sec=sec)
@@ -50,7 +50,7 @@ class PGkBuzzer(BuzzerWrap):
         
         
 class PGkDCMotor(DCMotorWrap):
-    level = property(DCMotorWrap._get_dc_power, DCMotorWrap._set_dc_power)
+    power = property(DCMotorWrap.get_power, DCMotorWrap.set_power)
     
     def job_drive(self,sec,*,forward=True,brake=True):
         def fn(job):
