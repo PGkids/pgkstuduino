@@ -21,8 +21,6 @@ try:
 except pgm.error:
     raise Exception('Joystick not found')
 
-
-
 st_set_debug('-debug' in argv)
 st_set_real('-devel' not in argv)
 connect(4)
@@ -35,6 +33,7 @@ back_job = None
 
 powers = [(50,30),(60,30),(70,40),(80,40),(90,50),(100,50)]
 power_index = len(powers) - 1
+dc_left.power = dc_right.power = powers[power_index][0]
 
 # J.S.Bachの教会カンタータの有名な旋律
 songdata = [0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1,2,5,4,2,4,
@@ -69,19 +68,16 @@ while True:
         # 十字ボタンX軸 (方向制御)
         hi,lo = powers[power_index]
         if e.value > 0.5: #############  右折   ################
-            dc_left.setPower(hi)
-            dc_right.setPower(lo)
+            dc_left.power,dc_right.power = hi,lo
             led_right.on()
             direction = 'right'
         elif e.value < -0.5: ##########  左折   ################
-            dc_left.setPower(lo)
-            dc_right.setPower(hi)
+            dc_left.power,dc_right.power = lo,hi
             led_left.on()
             direction = 'left'
         else:                ##########  直進   #################
-            dc_left.setPower(hi)
-            dc_right.setPower(hi)
-            if direction is 'left': led_left.off()
+            dc_left.power,dc_right.power = hi,hi
+            if direction   is 'left':  led_left.off()
             elif direction is 'right': led_right.off()
             direction = None
 
@@ -98,11 +94,9 @@ while True:
         else:
             continue
         hi,lo = powers[power_index]
-        if direction is 'left':   left_pow,right_pow = lo,hi
-        elif direction is 'right': left_pow,right_pow = hi,lo
-        else:                     left_pow,right_pow = hi,hi
-        dc_left.setPower(left_pow)
-        dc_right.setPower(right_pow)
+        if direction   is 'left':  dc_left.power,dc_right.power = lo,hi
+        elif direction is 'right': dc_left.power,dc_right.power = hi,lo
+        else:                      dc_left.power,dc_right.power = hi,hi
         set_power_status()
             
     elif e.type==pgm.JOYBUTTONDOWN and (e.button==JS_ACCELBTN or
@@ -133,6 +127,5 @@ while True:
         else:
             led_accel.off()
         pgm.mixer.music.stop()
-
 
 disconnect()
