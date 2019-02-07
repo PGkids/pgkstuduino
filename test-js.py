@@ -25,32 +25,32 @@ st_set_debug('-debug' in argv)
 st_set_real('-devel' not in argv)
 connect(4)
 
-dc_left,dc_right = mkpart('DCMotor:M1/M2')
 led_left,led_accel,led_right = mkpart('LED:A0/A1/A2')
-buzzer = mkpart('Buzzer:A3')
-direction = None # 'left' ir 'right'
-back_job = None
+dc_left,dc_right,buzzer = mkpart('DCMotor:M1/M2,Buzzer:A3')
+direction = None # 'left' or 'right'
+back_job  = None
 
 powers = [(50,30),(60,30),(70,40),(80,40),(90,50),(100,50)]
 power_index = len(powers) - 1
 dc_left.power = dc_right.power = powers[power_index][0]
 
-# J.S.Bachの教会カンタータの有名な旋律
-songdata = [0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1,2,5,4,2,4,
+# J.S.Bachの教会カンタータの有名な旋律(BWV147)
+SONG_DATA = (0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4,5,7,9,7,5,4,2,4,0, -1,0,2,-5,-1,2,5,4,2,4,
             0,2,4,7,5,5,9,7,7,12,11,12,7,4,0,2,4, 2,7,5,4,2,0,-5,0,-1,0,4,7,12,7,4,0,4, 6,
             7,-5,-3,-1,2,1,1,4,2,2,5,4,5,2,-3,-7,-5,-3,-2,7,5,7,4,1,-3,-1,1,
-            2,5,4,5,9,7,7,10,9,9,14,13,14,9,5,2,4,5, 10,9,7,5,4,2,-3,2,1,2,5,9,14,9,5,2]
+            2,5,4,5,9,7,7,10,9,9,14,13,14,9,5,2,4,5, 10,9,7,5,4,2,-3,2,1,2,5,9,14,9,5,2)
 
-def mk_buzzer_job():
-    cnt = 0
+def mk_back_job():
+    cnt,length = 0,len(SONG_DATA)
     def perform_song():
         nonlocal cnt
-        current_note = 55 + songdata[cnt%len(songdata)] #カンタータ原曲どおりト長調で
+        current_note = 55 + SONG_DATA[cnt%length] #カンタータ原曲どおりト長調で
         cnt += 1
         buzzer.noteon(current_note)
         sleep(0.15)
         buzzer.noteoff()
-    return rep(mkjob(perform_song),interval=0.05)
+    return par(led_accel.job_blink(on=0.2,off=0.3),
+               rep(mkjob(perform_song), interval=0.05))
 
 status = create_label('初期状態です')
 power_status = create_label('')
@@ -84,9 +84,7 @@ while True:
     elif e.type==pgm.JOYAXISMOTION and e.axis==1:
         # 十字ボタンY軸 (パワー制御)
         if e.value > 0.5:
-            if power_index > 0:
-                power_index -= 1
-                sound_down.play();
+            if power_index > 0: power_index -= 1; sound_down.play()
             else: continue
         elif e.value < -0.5:
             if power_index < len(powers)-1: power_index += 1; sound_up.play()
@@ -109,9 +107,7 @@ while True:
             status('出発進行～！ THE VOICE OF ROCK! GLENN HUGHES!!')
             pgm.mixer.music.load('js-drive.wav')
         else:
-            back_job = par(led_accel.job_blink(on=0.2,off=0.3),
-                           mk_buzzer_job())
-            back_job.start()
+            back_job = mk_back_job().start()
             status('バックします。ご注意ください！')
             pgm.mixer.music.load('js-back.wav')
         pgm.mixer.music.set_volume(1.0)
