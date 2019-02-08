@@ -94,14 +94,13 @@ while True:
         hi,lo = powers[power_index]
         if direction   is 'left':  dc_left.power,dc_right.power = lo,hi
         elif direction is 'right': dc_left.power,dc_right.power = hi,lo
-        else:                      dc_left.power,dc_right.power = hi,hi
+        else:                      dc_left.power = dc_right.power = hi
         set_power_status()
             
     elif e.type==pgm.JOYBUTTONDOWN and (e.button==JS_ACCELBTN or
                                         e.button==JS_RACCELBTN):
         fwdp = e.button==JS_ACCELBTN
-        dc_left.moveon(forward=fwdp)
-        dc_right.moveon(forward=fwdp)
+        dc_left.state = dc_right.state = 'fwd' if fwdp else 'back'
         if fwdp:
             led_accel.on()
             status('出発進行～！ THE VOICE OF ROCK! GLENN HUGHES!!')
@@ -114,8 +113,7 @@ while True:
         pgm.mixer.music.play(-1)
     elif e.type==pgm.JOYBUTTONUP and (e.button==JS_ACCELBTN or
                                       e.button==JS_RACCELBTN):
-        dc_left.stop()
-        dc_right.stop()
+        dc_left.state = dc_right.state = 'brake'
         status('停車')
         if back_job: 
             back_job.cancel().join()

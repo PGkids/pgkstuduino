@@ -50,7 +50,6 @@ class PGkBuzzer(BuzzerWrap):
         
         
 class PGkDCMotor(DCMotorWrap):
-    power = property(DCMotorWrap.get_power, DCMotorWrap.set_power)
     
     def job_drive(self,sec,*,forward=True,brake=True):
         def fn(job):
@@ -65,10 +64,9 @@ class PGkDCMotor(DCMotorWrap):
     def moveon(self,*,forward=True):
         self.move(FWD if forward else BCK)
 
-    # DCMotor.stop()を遮蔽することに注意（互換性あり）
     def stop(self,*,motion=BRAKE, brake=True):
         if motion==BRAKE and not brake: motion = COAST
-        DCMotorWrap.stop(self, motion)
+        self._stop(self, motion)
 
 class PGkServomotor(ServomotorWrap):
     def job_move(self, angle):

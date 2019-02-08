@@ -207,8 +207,15 @@ class BuzzerWrap(PartWrap):
         if _realp: self._part.on(sound, octave=octave, duration=duration)
     
 
+_DC_FWDS = ('fwd', 'forward', st.FWD, '前進', '前転')
+_DC_BACKS = ('bck', 'back', st.BCK, '後進', '後転')
+_DC_BRAKES = ('brk', 'brake','stop', st.BRAKE, None, '停止')
+_DC_COASTS = ('coast', st.COAST, '惰性')
+
 class DCMotorWrap(PartWrap):
     _frame_type = 'dc'
+    __state = _DC_BRAKES
+    
     def __init__(self):
         super().__init__(st.DCMotor,'DC Motor')
         self.__cur_power = 0
@@ -220,19 +227,44 @@ class DCMotorWrap(PartWrap):
         if _debug: _debug('DCMotor::move',motion=motion)
         self._widget.configure(bg='yellow' if motion == st.FWD else 'lightblue')
         if _realp: self._part.move(motion)
-    def stop(self, motion):
+
+    def _stop(self, motion):
         if _debug: _debug('DCMotor::stop',motion=motion)
         self._widget.configure(bg='white')
         if _realp: self._part.stop(motion)
+
     def set_power(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
         self._widget.configure(state='active')
         self._widget.set(power)
         self._widget.configure(state='disabled')
         if _realp: self._part.setPower(power)
+
     def get_power(self):
         return __cur_power
 
+    power = property(get_power, set_power)
+
+    def __get_state(self):
+        return self.__state
+    def __set_state(self, x):
+        if x in _DC_FWDS:
+            self.move(st.FWD)
+            self.__state = _DC_FWDS
+        elif x in _DC_BACKS:  
+            self.move(st.BCK)
+            self.__state = _DC_BACKS
+        elif x in _DC_BRAKES:
+            self._stop(st.BRAKE)
+            self.__state = _DC_BRAKES
+        elif x in _DC_COASTS:
+            self._stop(st.COAST)
+            self.__state = _DC_COASTS
+        else: raise(Exception(f'DC Motor: state: invalid state {x}'))
+    state = property(__get_state, __set_state)
+            
+
+    
 class LEDWrap(PartWrap):
     _frame_type = 'led'
     def __init__(self):
@@ -257,25 +289,42 @@ class ServomotorWrap(PartWrap):
         self._widget.set(angle)
         self._widget.configure(state='disabled', bg='white')
         
-    def setAngle(self, angle):
+    def set_angle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         _set_angle_for_simulator(angle)
         if _realp: self._part.setAngle(angle)
 
+    def setAngle(self, angle):
+        self.set_angle(angle)
+        
     @staticmethod
-    def syncMove(self, servos, angles, delay):
+    def sync_move(servos, angles, delay):
         if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
         for (servo,angle) in zip(servos,angles):
             servo._set_angle_for_simulator(angle)
-        if _realp: self._part.syncMove(servos, angles, delay)
+        if _realp:
+            real_servos = list(map(lambda s:s._part, servos))
+            Servomotor.syncMove(real_servos, angles, delay)
 
+    @staticmethod
+    def syncMove(servos, angles, delay):
+        self.sync_move(servos, angles, delay)
+    
+        
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
         if _realp:
             #print(st.Sensor.getValue(self))
-            return self._part.getValue()
-        else:      return self._widget.get() 
+            val = self._part.getValue()
+            self._widget.set(val)
+            return val
+        else:      return self._widget.get()
+
+    def get_value(self):
+        return self.getValue()
+    
+    state = property(getValue)
 
 class PushSwitchWrap(PartWrap,SensorWrap):
     _frame_type = 'digital'
@@ -309,7 +358,12 @@ class AccelerometerWrap(PartWrap):
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
-        if _realp: return self._part.getValue()
+        if _realp:
+            xyz = self._part.getValue()
+            self._x_widget.set(xyz[0])
+            self._y_widget.set(xyz[1])
+            self._z_widget.set(xyz[2])
+            return xyz
         else:      return (self._x_widget.get(),
                            self._y_widget.get(),
                            self._z_widget.get())
