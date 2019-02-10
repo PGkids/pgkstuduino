@@ -5,15 +5,19 @@ import os
 import studuino as st
 import tkinter as tk
 from threading import Thread,Event
+from .vconnectors import *
 
 _reversed_conn_dic = {st.A0:'A0', st.A1:'A1', st.A2:'A2', st.A3:'A3',
                       st.A4:'A4', st.A5:'A5', st.A6:'A6', st.A7:'A7',
                       st.M1:'M1', st.M2:'M2',
                       st.D2:'D2', st.D4:'D4', st.D7:'D7', st.D8:'D8',
                       st.D9:'D9', st.D10:'D10', st.D11:'D11', st.D12:'D12'}
+                      
 def get_connector_name(conn):
     if conn in _reversed_conn_dic:
         return _reversed_conn_dic[conn]
+    elif isinstance(conn, PGkVirtualConnector):
+        return conn.id
     else:
         raise(ValueError)
 
@@ -133,6 +137,8 @@ def st_stop():
 class PartWrap():
     _widget = None
     _part   = None
+    _connector = None
+    __not_virtual = None
     def __init__(self, real_part_class, name):
         self.name = name
         if _realp: self._part = real_part_class()
@@ -175,10 +181,15 @@ class PartWrap():
 
     def _configure_after_attach(self):
         pass
+
+    def is_real(self):
+        return _realp and self.__not_virtual
     
     def attach(self,connector):
+        self._connector = connector
+        self.__not_virtual = not is_virtual_connector(connector)
         if _debug: _debug(f'{self.name}::attach',connector=connector)
-        if _realp: self._part.attach(connector)
+        if self.is_real(): self._part.attach(connector)
         self._configure_after_attach()
         if _simulator:
             t = self._frame_type
@@ -198,13 +209,13 @@ class BuzzerWrap(PartWrap):
     def off(self):
         if _debug: _debug('Buzzer::off')
         self._widget.configure(bg='white')
-        if _realp: self._part.off()
+        if self.is_real(): self._part.off()
     def on(self, sound, octave=0, duration=0):
         if _debug: _debug('Buzzer::on',sound=sound, octave=octave, duration=duration)
         self._widget.configure(bg='yellow', state='active')
         self._widget.set(octave*12+sound)
         self._widget.configure(state='disabled')
-        if _realp: self._part.on(sound, octave=octave, duration=duration)
+        if self.is_real(): self._part.on(sound, octave=octave, duration=duration)
     
 
 _DC_FWDS = ('fwd', 'forward', st.FWD, '前進', '前転')
@@ -221,24 +232,24 @@ class DCMotorWrap(PartWrap):
         self.__cur_power = 0
 
     def _configure_after_attach(self):
-        if _realp: self._part.setPower(self.__cur_power)
+        if self.is_real(): self._part.setPower(self.__cur_power)
 
     def move(self, motion):
         if _debug: _debug('DCMotor::move',motion=motion)
         self._widget.configure(bg='yellow' if motion == st.FWD else 'lightblue')
-        if _realp: self._part.move(motion)
+        if self.is_real(): self._part.move(motion)
 
     def _stop(self, motion):
         if _debug: _debug('DCMotor::stop',motion=motion)
         self._widget.configure(bg='white')
-        if _realp: self._part.stop(motion)
+        if self.is_real(): self._part.stop(motion)
 
     def set_power(self, power):
         if _debug: _debug('DCMotor::setPower',power=power)
         self._widget.configure(state='active')
         self._widget.set(power)
         self._widget.configure(state='disabled')
-        if _realp: self._part.setPower(power)
+        if self.is_real(): self._part.setPower(power)
 
     def get_power(self):
         return __cur_power
@@ -273,11 +284,11 @@ class LEDWrap(PartWrap):
     def on(self):
         if _debug: _debug('LED::on')
         self._widget.configure(bg='yellow')
-        if _realp: self._part.on()
+        if self.is_real(): self._part.on()
     def off(self):
         if _debug: _debug('LED::off')
         self._widget.configure(bg='white')
-        if _realp: self._part.off()
+        if self.is_real(): self._part.off()
 
 class ServomotorWrap(PartWrap):
     _frame_type = 'servo'
@@ -292,7 +303,7 @@ class ServomotorWrap(PartWrap):
     def set_angle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
         _set_angle_for_simulator(angle)
-        if _realp: self._part.setAngle(angle)
+        if self.is_real(): self._part.setAngle(angle)
 
     def setAngle(self, angle):
         self.set_angle(angle)
@@ -302,7 +313,7 @@ class ServomotorWrap(PartWrap):
         if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
         for (servo,angle) in zip(servos,angles):
             servo._set_angle_for_simulator(angle)
-        if _realp:
+        if self.is_real():
             real_servos = list(map(lambda s:s._part, servos))
             Servomotor.syncMove(real_servos, angles, delay)
 
@@ -314,7 +325,7 @@ class ServomotorWrap(PartWrap):
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
-        if _realp:
+        if self.is_real():
             #print(st.Sensor.getValue(self))
             val = self._part.getValue()
             self._widget.set(val)
@@ -358,7 +369,7 @@ class AccelerometerWrap(PartWrap):
 
     def getValue(self):
         if _debug: _debug('Accelerometer::getValue')
-        if _realp:
+        if self.is_real():
             xyz = self._part.getValue()
             self._x_widget.set(xyz[0])
             self._y_widget.set(xyz[1])
