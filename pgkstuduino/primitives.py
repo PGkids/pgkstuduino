@@ -313,9 +313,14 @@ class ServomotorWrap(PartWrap):
         if _debug: _debug('ServoMotor::syncMove', servos=servos, angles=angles, delay=delay)
         for (servo,angle) in zip(servos,angles):
             servo._set_angle_for_simulator(angle)
-        if self.is_real():
-            real_servos = list(map(lambda s:s._part, servos))
-            Servomotor.syncMove(real_servos, angles, delay)
+        if _realp:
+            real_servos,real_angles = [],[]
+            for pair in zip(servos,angles):
+                if pair[0].is_real():
+                    real_servos.append(pair[0])
+                    real_angles.append(pair[1])
+            #real_servos = list(map(lambda s:s._part, servos))
+            Servomotor.syncMove(real_servos, real_angles, delay)
 
     @staticmethod
     def syncMove(servos, angles, delay):

@@ -10,7 +10,8 @@ st_set_real('-devel' not in argv)
 
 connect(4)
 
-p,s1,s2 = mkpart('PushSwitch:A3,LightSensor:A4,SoundSensor:A7')
+p,s1,s2 = mkpart('PushSwitch:A3*,LightSensor:A4*,SoundSensor:A7*')
+#p,s1,s2 = mkpart('PushSwitch:A3,LightSensor:A4,SoundSensor:A7')
 j1 = s1.job_monitor(lambda x:print(f'    light:value={x}') ,interval=0.3)
 j2 = s2.job_monitor(lambda x:print(f'sound:value={x}') ,interval=0.3)
 def cancel_monitor():
