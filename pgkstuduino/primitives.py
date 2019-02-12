@@ -158,7 +158,7 @@ class PartWrap():
                 self._widget.pack()
             elif self._frame_type is 'servo':
                 self._widget = tk.Scale(_simulator.servo_frame, label=name,orient='h',
-                                        bg='white', width='4', sliderlength='4', from_=0,to=100)
+                                        bg='white', width='4', sliderlength='4', from_=0,to=180)
                 self._widget.pack()
             elif self._frame_type is 'digital':
                 self._widget = tk.Scale(_simulator.digital_frame, label=name,orient='h',from_=0,to=1)
@@ -278,6 +278,7 @@ class DCMotorWrap(PartWrap):
     
 class LEDWrap(PartWrap):
     _frame_type = 'led'
+    __state = False
     def __init__(self):
         super().__init__(st.LED,'LED')
 
@@ -285,24 +286,37 @@ class LEDWrap(PartWrap):
         if _debug: _debug('LED::on')
         self._widget.configure(bg='yellow')
         if self.is_real(): self._part.on()
+        self.__state = True
     def off(self):
         if _debug: _debug('LED::off')
         self._widget.configure(bg='white')
         if self.is_real(): self._part.off()
+        self.__state = False
+
+    def __get_state(self):
+        return self.__state
+    def __set_state(self, x):
+        if x: self.on()
+        else: self.off()
+        
+    state = property(__get_state, __set_state)
 
 class ServomotorWrap(PartWrap):
     _frame_type = 'servo'
+    __angle = None
     def __init__(self):
         super().__init__(st.Servomotor,'Servo')
 
+    # このメソッドは実機か非実機によらず必ず呼ばれるため、ここでangleを保存させる
     def _set_angle_for_simulator(self, angle):
+        self.__angle = angle
         self._widget.configure(state='active', bg='yellow')
         self._widget.set(angle)
         self._widget.configure(state='disabled', bg='white')
         
     def set_angle(self, angle):
         if _debug: _debug('ServoMotor::setAngle',angle=angle)
-        _set_angle_for_simulator(angle)
+        self._set_angle_for_simulator(angle)
         if self.is_real(): self._part.setAngle(angle)
 
     def setAngle(self, angle):
@@ -326,7 +340,13 @@ class ServomotorWrap(PartWrap):
     def syncMove(servos, angles, delay):
         self.sync_move(servos, angles, delay)
     
+    def __get_angle(self):
+        return self.__angle
+    def __set_angle(self, angle):
+        self.set_angle(angle)
         
+    angle = property(__get_angle, __set_angle)
+
 class SensorWrap():
     def getValue(self):
         if _debug: _debug(f'{self.name}::getValue')
