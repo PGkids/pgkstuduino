@@ -7,7 +7,7 @@ from time import sleep
 
 st_set_debug('-debug' in argv)
 st_set_real('-devel' not in argv)
-connect(3)
+connect(4)
 
 led1,led2,led3 = mkpart('LED:A0/A1/A2')
 servo1,servo2  = mkpart('Servo:D2/D4')
@@ -28,14 +28,14 @@ def reset():
 create_button('リセット', reset)
 reset()
 
-sw = mkpart('PushSwitch:A3')
+sw = mkpart('PushSwitch:A3*')
 job = sw.job_on_pushed(lambda:print('終了します'),once=True)
 
 mid = midiate.Midiator()
 mid.start_process()
 
-indev = mid.open_input(name='loopMIDI Port');
-#indev = mid.open_input(name='UM-1');
+#indev = mid.open_input(name='loopMIDI Port');
+indev = mid.open_input(name='UM-1');
 
 def on_succeeded():
     status_label('おめでとうございます！')
@@ -71,7 +71,7 @@ def check_note(dev, msg, raw):
         else:
             status_label('NG')
             led3.state = led2.state = True
-            servo2.angle += 30
+            servo2.angle += 10
             if servo2.angle >= 180: on_failed()
     else:
         if led1.state: led1.state = False
