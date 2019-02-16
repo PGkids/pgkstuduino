@@ -36,6 +36,10 @@ class Simulator(tk.Frame):
     def toggle_quit_button_operation(self):
         self.quit_btn.configure(text='EXIT NORMALLY',
                                 bg='white', fg='green', command=self.quit_normally)
+
+    def close_request(self):
+        self.after(1, self.quit_normally)
+    
     def create_widgets(self):
         self.quit_btn = tk.Button(self, text='ABORT this process immediately',
                               bg='blue', fg='white', command=self.abort)
@@ -96,6 +100,20 @@ def st_set_debug(enable=True):
 def st_set_real(enable=True):
     global _realp
     _realp = enable
+
+def _check_simulator():
+    if not _simulator:
+        raise Exception('Simulator not initialized')
+
+def create_label(text='user label'):
+    _check_simulator()
+    return _simulator.create_label(text)
+
+def create_button(text='user button', command=None):
+    _check_simulator()
+    return _simulator.create_button(text,command=command)
+
+def _initialize_gui_panel():
     ev = Event()
     def gui():
         root = tk.Tk()
@@ -110,29 +128,17 @@ def st_set_real(enable=True):
     thr = Thread(target=gui)
     thr.start()
     ev.wait()
-
-def _check_simulator():
-    if not _simulator:
-        raise Exception('Simulator not initialized')
-
-def create_label(text='user label'):
-    _check_simulator()
-    return _simulator.create_label(text)
-
-def create_button(text='user button', command=None):
-    _check_simulator()
-    return _simulator.create_button(text,command=command)
-
-
     
 def st_start(com_port:str):
-    if _debug: _debug('st_start', com_port=com_port, baud_rate=baud_rate)
+    _initialize_gui_panel()
+    if _debug: _debug('st_start', com_port=com_port)
     if _realp: st.start(com_port)
 
-def st_stop():
+def st_stop(close_panel=False):
     if _debug: _debug('st_stop')
     if _realp: st.stop()
-    _simulator.toggle_quit_button_operation()
+    if close_panel: _simulator.close_request()
+    else:           _simulator.toggle_quit_button_operation()
 
 class PartWrap():
     _widget = None

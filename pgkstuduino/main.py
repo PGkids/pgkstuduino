@@ -5,11 +5,14 @@ import studuino
 from .primitives import *
 from .utils import ensure_part,ensure_connector
 
-def connect(comPortNo):
-    st_start(f'COM{comPortNo}')
+def connect(comPort):
+    if isinstance(comPort, str):
+        st_start(comPort)
+    else:
+        st_start(f'COM{comPort}')
 
-def disconnect():
-    st_stop()
+def disconnect(close_panel=False):
+    st_stop(close_panel)
 
 def build(p):
     ctor = p[0]
