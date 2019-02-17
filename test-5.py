@@ -34,8 +34,8 @@ job = sw.job_on_pushed(lambda:print('終了します'),once=True)
 mid = midiate.Midiator()
 mid.start_process()
 
-#indev = mid.open_input(name='loopMIDI Port');
-indev = mid.open_input(name='UM-1');
+indev = mid.open_input(name='loopMIDI Port');
+#indev = mid.open_input(name='UM-1');
 
 def on_succeeded():
     status_label('おめでとうございます！')
@@ -61,7 +61,8 @@ def on_failed():
 CORRECT_NOTES = {0,1,3,4,6,7,9,10}
 def check_note(dev, msg, raw):
     if led_job: return None
-    if raw[0]&0xF0==0x90 and raw[2]>0:
+    #if True: #raw[0]&0xF0==0x90 and raw[2]>0:
+    if raw[2]:
         note = raw[1]
         if note%12 in CORRECT_NOTES:
             status_label(f'OK {raw[1]}')
@@ -73,12 +74,20 @@ def check_note(dev, msg, raw):
             led3.state = led2.state = True
             servo2.angle += 10
             if servo2.angle >= 180: on_failed()
-    else:
+    elif False:
         if led1.state: led1.state = False
         if led2.state: led2.state = False
         if led3.state: led3.state = False
-    
-mid.callback(indev,'9,8', check_note)
+
+def on_noteoff(dev, msg, raw):
+    if led1.state: led1.state = False
+    if led2.state: led2.state = False
+    if led3.state: led3.state = False
+
+        
+mid.callback(indev,'8,9***00', on_noteoff)
+mid.callback(indev,'9',check_note)
+
 mid.listen(indev)
 
 job()

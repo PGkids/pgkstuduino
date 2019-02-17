@@ -89,9 +89,11 @@ class RobotJob():
             self.__event.set()
         return self
 
+## プロシージャ(無引数関数)からジョブへの変換
 def mkjob(proc, *args) -> RobotJob:
     return RobotJob(lambda job:proc(*args))
 
+## 並列ジョブ
 def par(*jobs) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
@@ -115,6 +117,7 @@ def par(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
+## 直列ジョブ
 def seq(*jobs) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
@@ -129,6 +132,7 @@ def seq(*jobs) -> RobotJob:
 
     return RobotJob(fn)
 
+## 反復ジョブ
 def rep(job, *, n=None, interval=None) -> RobotJob:
     def fn(master_job):
         ev = master_job._get_event()
